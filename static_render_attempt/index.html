@@ -1,22 +1,25 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>uORF Visualization</title>
+    <title>uORFs Visualization</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
     <style>
         #controls, #visualization {
             margin: 20px;
         }
-        .checkbox-group {
+        .input-container {
+            margin-bottom: 1rem;
+        }
+        .input-container form {
             display: flex;
             flex-direction: column;
             gap: 8px;
         }
-        .checkbox-group label {
-            font-family: sans-serif;
+        .input-container label {
             display: flex;
             gap: 8px;
             align-items: center;
+            font-family: sans-serif;
         }
     </style>
 </head>
@@ -28,7 +31,7 @@
         import { render } from './render.js';
         import { Inputs } from './inputs.js';
 
-        // Create the checkbox input using the Observable-style syntax
+        // Create the checkbox input
         const selectCodons = Inputs.checkbox(
             ["ATG", "CTG", "TTG", "GTG", "TGG", "TCG", "UTU", "TTT", "TTC"],
             {
@@ -44,8 +47,14 @@
         function updateVisualization(selectedCodons) {
             d3.select("#visualization").select("svg").remove();
 
-            d3.json("uorfs.json").then(data => {
-                const filteredRegions = data;  
+            d3.json("uorfs.json").then(uorfs => {
+                // Filter the regions based on selected codons
+                const filteredRegions = Object.assign({}, uorfs, {
+                    regions: uorfs.regions.filter(region => 
+                        selectedCodons.includes(region.start_codon) || region.type === 'transcript'
+                    )
+                });
+                
                 const width = window.innerWidth - 40;
                 const height = 600;
                 
@@ -54,6 +63,7 @@
                     .attr("width", width)
                     .attr("height", height);
                 
+                // Pass the filtered data to the render function
                 render(svg.node(), width, height, filteredRegions);
             }).catch(error => {
                 console.error("Error loading the JSON file:", error);
