@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>uORF Visualization</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+    <style>
+        #controls, #visualization {
+            margin: 20px;
+        }
+        .checkbox-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .checkbox-group label {
+            font-family: sans-serif;
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+    </style>
+</head>
+<body>
+    <div id="controls"></div>
+    <div id="visualization"></div>
+
+    <script type="module">
+        import { render } from './render.js';
+        import { Inputs } from './inputs.js';
+
+        // Create the checkbox input using the Observable-style syntax
+        const selectCodons = Inputs.checkbox(
+            ["ATG", "CTG", "TTG", "GTG", "TGG", "TCG", "UTU", "TTT", "TTC"],
+            {
+                label: "Start Codons",
+                value: ["ATG", "CTG"]
+            }
+        );
+
+        // Add the checkbox element to the controls
+        document.getElementById('controls').appendChild(selectCodons.element);
+
+        // Function to update visualization based on selected codons
+        function updateVisualization(selectedCodons) {
+            d3.select("#visualization").select("svg").remove();
+
+            d3.json("uorfs.json").then(data => {
+                const filteredRegions = data;  
+                const width = window.innerWidth - 40;
+                const height = 600;
+                
+                const svg = d3.select("#visualization")
+                    .append("svg")
+                    .attr("width", width)
+                    .attr("height", height);
+                
+                render(svg.node(), width, height, filteredRegions);
+            }).catch(error => {
+                console.error("Error loading the JSON file:", error);
+            });
+        }
+
+        // Listen for changes to the checkboxes
+        selectCodons.addEventListener('change', updateVisualization);
+
+        // Initial render
+        updateVisualization(selectCodons.value);
+    </script>
+</body>
+</html>
