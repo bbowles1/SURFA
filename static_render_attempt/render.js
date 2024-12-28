@@ -49,7 +49,7 @@ export const render = (svg, width, height, uorfs) => {
           .enter().append('rect')
               .attr('opacity', 0)
               .attr('stroke-width', 1)
-              .attr('width', d => xScale(d.end) - xScale(d.start))
+              .attr('width', d => xScale(d.stop) - xScale(d.start))
               .attr('height', rectHeight)
               .attr('x', d => xScale(d.start)) 
               .attr('y', yScale(regionD.id) - rectHeight / 2)
@@ -58,8 +58,8 @@ export const render = (svg, width, height, uorfs) => {
               .on('mouseover', () => { tooltip.style('display', null); })
               .on('mouseout', () => { tooltip.style('display', 'none'); })
               .on('mousemove', () => {
-                const mouseX = d3.mouse(this)[0];
-                const mouseY = d3.mouse(this)[1];
+                const mouseX = d3.pointer(this)[0];
+                const mouseY = d3.pointer(this)[1];
           		tooltip.attr('transform', `translate(${mouseX + 5}, ${mouseY + 5})`);
           		tooltip.text(`Transcript id: ${regionD.id}`)
           		 if (mouseX > width / 2) {
