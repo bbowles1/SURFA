@@ -58,8 +58,8 @@ export const render = (svg, width, height, uorfs) => {
               .on('mouseover', () => { tooltip.style('display', null); })
               .on('mouseout', () => { tooltip.style('display', 'none'); })
               .on('mousemove', () => {
-                const mouseX = d3.pointer(this)[0];
-                const mouseY = d3.pointer(this)[1];
+                const mouseX = d3.pointer(event)[0];
+                const mouseY = d3.pointer(event)[1];
           		tooltip.attr('transform', `translate(${mouseX + 5}, ${mouseY + 5})`);
           		tooltip.text(`Transcript id: ${regionD.id}`)
           		 if (mouseX > width / 2) {
