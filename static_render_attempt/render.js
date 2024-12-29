@@ -49,7 +49,7 @@ export const render = (svg, width, height, uorfs) => {
           .enter().append('rect')
               .attr('opacity', 0)
               .attr('stroke-width', 1)
-              .attr('width', d => xScale(d.stop) - xScale(d.start))
+              .attr('width', d => xScale(d.end) - xScale(d.start))
               .attr('height', rectHeight)
               .attr('x', d => xScale(d.start)) 
               .attr('y', yScale(regionD.id) - rectHeight / 2)
