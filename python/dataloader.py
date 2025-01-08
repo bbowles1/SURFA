@@ -140,16 +140,16 @@ def get_uorfs(sequence, transcript_id):
     dict: Nested dictionary containing uORF information
     """
     
-    # Step 1: Clean and validate input
+    # Clean and validate input
     sequence = sequence.upper().replace(',', '')
-    valid_nucleotides = set('GCTA')
+    valid_nucleotides = set('GCTAN')
     if not all(nuc in valid_nucleotides for nuc in sequence):
         raise ValueError("Sequence contains invalid nucleotides")
     
     # Store total sequence length
     total_length = len(sequence)
     
-    # Step 2: Define start and stop codons (in RNA format)
+    # set start and stop codons
     stop_codons = {'UAA', 'UAG', 'UGA'}
     start_codons = {
         'AUG',  # Canonical
@@ -158,27 +158,25 @@ def get_uorfs(sequence, transcript_id):
         'UUU', 'UUC', 'UUA'   # Rare non-canonical
     }
     
-    # Step 3: Function to convert DNA to RNA
+    # convert DNA to RNA nucleotides
     def dna_to_rna(dna_seq):
         return dna_seq.replace('T', 'U')
     
-    # Step 4: Function to convert RNA to DNA
     def rna_to_dna(rna_seq):
         return rna_seq.replace('U', 'T')
     
-    # Step 5: Function to get sequence context around start codon
+    # get sequence context around start codon
     def get_start_context(seq, start_pos):
-        # Get sequence context while handling edge cases
         context_start = max(0, start_pos)
         context_end = min(len(seq), start_pos + 3)
         return seq[context_start:context_end]
     
-    # Step 6: Function to split sequence into codons for a given frame
+    # split sequence into codons for a given frame
     def get_codons(seq, frame):
         rna_seq = dna_to_rna(seq[frame:])
         return [rna_seq[i:i+3] for i in range(0, len(rna_seq)-2, 3)]
     
-    # Step 7: Function to find all start and stop positions in a frame
+    # find all start and stop positions in a frame
     def find_orfs_in_frame(seq, frame):
         codons = get_codons(seq, frame)
         starts = []  # Will now store tuples of (index, start_codon)
@@ -192,11 +190,16 @@ def get_uorfs(sequence, transcript_id):
         
         return starts, stops
     
-    # Step 8: Create counters for each start codon type
+    # create counters for each start codon type
     start_codon_counters = {}
     
-    # Step 9: Analyze all three frames and build uORF dictionary
-    uorfs = []
+    # analyze all three frames and build uORF dictionary
+    uorfs = pd.DataFrame(columns=[
+        'uorf_id','frame',
+        'start_pos','stop_pos',
+        'dna_start_codon','stop_codon',
+        'orf_sequence','total_length',
+        'kozak_score','start_context'])
     
     for frame in range(3):
         starts, stops = find_orfs_in_frame(sequence, frame)
@@ -229,31 +232,65 @@ def get_uorfs(sequence, transcript_id):
                     # Generate uORF ID using new format
                     uorf_id = f"{transcript_id}.{dna_start_codon}.{start_codon_counters[dna_start_codon]}"
                     
-                    uorf_row = {
-                        'id': uorf_id,
-                        'type': 'uorf',
-                        'frame': frame + 1,
-                        'start': start_pos,
-                        'end': stop_pos,
-                        'exons': [{
-                            'exon':'1',
-                            'type':'uorf',
-                            'start': int(start_pos),
-                            'end': int(stop_pos)
-                            }],
-                        'start_codon': dna_start_codon,
-                        'stop_codon': stop_codon,
-                        'length': stop_pos - start_pos + 3,
-                        'sequence': orf_sequence,
-                        'total_sequence_length': total_length,
-                        'kozak_score': kozak_score,
-                        'start_context': start_context
-                    }
-                    uorfs.append( uorf_row )
+                    # create a pandas dataframe row
+                    uorf_row = pd.DataFrame([[uorf_id,
+                                 frame,
+                                 start_pos,
+                                 stop_pos,
+                                 dna_start_codon,
+                                 stop_codon,
+                                 orf_sequence,
+                                 total_length,
+                                 kozak_score,
+                                 start_context
+                                 ]], columns=[
+                                     'uorf_id','frame',
+                                     'start_pos','stop_pos',
+                                     'dna_start_codon','stop_codon',
+                                     'orf_sequence','total_length',
+                                     'kozak_score','start_context'])
+                    
+                    # append row to pandas dataframe
+                    if uorfs.empty:
+                        uorfs = uorf_row
+                    else:
+                        uorfs = pd.concat([uorfs, uorf_row], axis=0)
+                        uorfs.reset_index(drop=True)
                     
                     break
     
-    return uorfs
+    # sort, remove duplicates 
+    uorfs.drop_duplicates(inplace=True)
+    uorfs.sort_values(by=['start_pos','stop_pos'], ascending=False, inplace=True)
+    
+    # convert to json
+    uorf_list = []
+    
+    for row in uorfs.itertuples():
+        uorf_row = {
+            'id': row.uorf_id,
+            'type': 'uorf',
+            'frame': row.frame + 1,
+            'start': row.start_pos,
+            'end': row.stop_pos,
+            'exons': [{
+                'exon':'1',
+                'type':'uorf',
+                'start': int(row.start_pos),
+                'end': int(row.stop_pos)
+                }],
+            'start_codon': row.dna_start_codon,
+            'stop_codon': row.stop_codon,
+            'length': row.stop_pos - row.start_pos + 3,
+            'sequence': row.orf_sequence,
+            'total_sequence_length': row.total_length,
+            'kozak_score': row.kozak_score,
+            'start_context': row.start_context
+        }
+        
+        uorf_list.append( uorf_row )
+    
+    return uorf_list
 
 
 def get_MANE_FASTA(ensg_df, FASTA_path, FASTA_dict):
