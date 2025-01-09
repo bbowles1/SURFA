@@ -13,9 +13,30 @@ export const render = (svg, width, height, uorfs, events = {}) => {
   const tColorScale = d3.scaleOrdinal()
       .domain(uorfs.regions.map(d => d.id))
       .range(['#855C75', '#D9AF6B', '#AF6458', '#736F4C', '#526A83', '#625377', '#68855C', '#9C9C5E', '#A06177', '#8C785D']);
-  
+
+
   // Create pattern definitions for UTR regions
   const defs = d3.select(svg).append("defs");
+  
+  // Create patterns for legend (using a consistent color)
+  const legendColor = "#526A83";
+  
+  // Add pattern for legend UTR
+  defs.append("pattern")
+    .attr("id", "legend-utr-pattern")
+    .attr("patternUnits", "userSpaceOnUse")
+    .attr("width", 8)
+    .attr("height", 8)
+    .append("g")
+    .attr("fill", "none")
+    .attr("stroke", legendColor)
+    .attr("stroke-width", 1)
+    .attr("stroke-opacity", 0.7)
+    .call(g => {
+      g.append("path").attr("d", "M-2,2 l4,-4 M0,8 l8,-8 M6,10 l4,-4");
+      g.append("path").attr("d", "M-2,6 l8,-8 M0,8 l8,-8 M6,2 l4,-4");
+    });
+
   
   // Create a diagonal line pattern for each possible color
   uorfs.regions.forEach(region => {
@@ -50,6 +71,71 @@ export const render = (svg, width, height, uorfs, events = {}) => {
       });
   });
   
+  // render legend
+  const legendSpacing = 20;
+  const legendRectWidth = 30;
+  const legendRectHeight = 15;
+
+  const legendGroup = d3.select(svg).append("g")
+    .attr("class", "legend")
+    .attr("transform", `translate(${width - margin.right - legendRectWidth - 200}, 
+      ${margin.top - 20})`);
+
+  const legendItems = [
+    { type: "UTR Region", pattern: "url(#legend-utr-pattern)" },
+    { type: "CDS Region", pattern: legendColor }
+  ];
+
+
+
+  // Add legend title
+  legendGroup.append("text")
+    .attr("x", 0)
+    .attr("y", 0)
+    .attr("font-family", "helvetica neue, helvetica, sans-serif")
+    .attr("font-size", "12px")
+    .attr("font-weight", "bold")
+    .text("Region Types");
+
+  // Add legend items
+  const legendItem = legendGroup.selectAll(".legend-item")
+    .data(legendItems)
+    .enter()
+    .append("g")
+    .attr("class", "legend-item")
+    .attr("transform", (d, i) => `translate(0, ${i * legendSpacing + 15})`);
+
+  // Add rectangles for each legend item
+  legendItem.append("rect")
+    .attr("width", legendRectWidth)
+    .attr("height", legendRectHeight)
+    .attr("fill", d => d.pattern)
+    .attr("stroke", legendColor)
+    .attr("stroke-width", 1);
+
+  // Add text labels for each legend item
+  legendItem.append("text")
+    .attr("x", legendRectWidth + 5)
+    .attr("y", legendRectHeight / 2)
+    .attr("dy", "0.35em")
+    .attr("font-family", "helvetica neue, helvetica, sans-serif")
+    .attr("font-size", "12px")
+    .text(d => d.type);
+
+  // Add semi-transparent white background for legend
+  const legendBBox = legendGroup.node().getBBox();
+  legendGroup.insert("rect", ":first-child")
+    .attr("x", -5)
+    .attr("y", -5)
+    .attr("width", legendBBox.width + 10)
+    .attr("height", legendBBox.height + 10)
+    .attr("fill", "white")
+    .attr("fill-opacity", 0.9)
+    .attr("rx", 5)
+    .attr("ry", 5);
+
+
+
   const xAxis = d3.axisBottom(xScale).ticks(5).tickSizeOuter(0);
   
   const chartContainer = d3.select(svg).append('g')
