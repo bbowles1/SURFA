@@ -56,7 +56,7 @@ export const render = (svg, width, height, uorfs, events = {}) => {
   const legendGroup = d3.select(svg).append("g")
     .attr("class", "legend");
 
-  const legendColor = "#526A83";
+  const legendColor = "#625377";
 
   // Add pattern for legend UTR
   defs.append("pattern")
@@ -85,7 +85,7 @@ export const render = (svg, width, height, uorfs, events = {}) => {
 
   const legendItems = [
     { type: "UTR Region", pattern: "url(#legend-utr-pattern)" },
-    { type: "CDS Region", pattern: legendColor }
+    { type: "CDS Region", pattern: legendColor, opacity: 0.7 }
   ];
 
   const legendSpacing = 20;
@@ -171,7 +171,7 @@ export const render = (svg, width, height, uorfs, events = {}) => {
         .attr('stroke-width', 1)
         .attr('stroke', d => tColorScale(d.id))
         .transition()
-        .duration(400)
+        .duration(200)
         .ease(d3.easeQuad)
         .attr('x2', d => xScale(d.end));
       
@@ -190,7 +190,7 @@ export const render = (svg, width, height, uorfs, events = {}) => {
           if (d.type === 'utr') {
             return `url(#cross-hatch-${regionD.id})`;
           } else if (d.type === 'cds') {
-            const color = d3.color(tColorScale(regionD.id));
+            const color = d3.color(legendColor);
             color.opacity = 0.7;
             return color;
           }
@@ -230,8 +230,8 @@ export const render = (svg, width, height, uorfs, events = {}) => {
             .text(`Transcript id: ${regionD.id}`);
         })
         .transition()
-        .delay(1500)
-        .duration(1200)
+        .delay(200)
+        .duration(200)
         .ease(d3.easeLinear)
         .attr('opacity', 1);
     });
