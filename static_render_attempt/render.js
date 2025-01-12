@@ -10,10 +10,6 @@ export const render = (svg, width, height, uorfs, events = {}) => {
       .domain(uorfs.regions.map(d => d.id))
       .range([height - margin.bottom, margin.top]);
   
-  //const tColorScale = d3.scaleOrdinal()
-  //    .domain(uorfs.regions.map(d => d.id))
-  //    .range(['#855C75', '#D9AF6B', '#AF6458', '#736F4C', '#526A83', '#625377', '#68855C', '#9C9C5E', '#A06177', '#8C785D']);
-
   const CODON_COLORS = {
     'ATG': '#2E86AB', // Ocean Blue
     'CTG': '#A23B72', // Berry
@@ -26,6 +22,11 @@ export const render = (svg, width, height, uorfs, events = {}) => {
     'TTC': '#5C4742'  // Brown
   };
   
+  // Get unique start codons present in the data
+  const presentCodons = [...new Set(uorfs.regions
+    .map(region => region.start_codon)
+    .filter(codon => codon))];
+      
   // Default color for unknown codons
   const DEFAULT_CODON_COLOR = '#999999';
 
@@ -72,64 +73,47 @@ export const render = (svg, width, height, uorfs, events = {}) => {
       });
   });
 
-  
-  // Create legend group without translation first
+
+  const legendColor = "#625377";  
+
   const legendGroup = d3.select(svg).append("g")
     .attr("class", "legend");
 
-  const legendColor = "#625377";
+  // Function to create a legend section
+  const createLegendSection = (title, items, yOffset) => {
 
-  // Add pattern for legend UTR
-  defs.append("pattern")
-    .attr("id", "legend-utr-pattern")
-    .attr("patternUnits", "userSpaceOnUse")
-    .attr("width", 8)
-    .attr("height", 8)
-    .append("g")
-    .attr("fill", "none")
-    .attr("stroke", legendColor)
-    .attr("stroke-width", 1)
-    .attr("stroke-opacity", 0.7)
-    .call(g => {
-      g.append("path").attr("d", "M-2,2 l4,-4 M0,8 l8,-8 M6,10 l4,-4");
-      g.append("path").attr("d", "M-2,6 l8,-8 M0,8 l8,-8 M6,2 l4,-4");
-    });
+    // Only create section if there are items to show
+    if (items.length === 0) return 0;
 
-  // Add legend title
-  legendGroup.append("text")
-    .attr("x", 0)
-    .attr("y", 0)
-    .attr("font-family", "helvetica neue, helvetica, sans-serif")
-    .attr("font-size", "12px")
-    .attr("font-weight", "bold")
-    .text("Region Types");
+    const section = legendGroup.append("g")
+      .attr("transform", `translate(0, ${yOffset})`);
 
-  const legendItems = [
-    { type: "UTR Region", pattern: "url(#legend-utr-pattern)" },
-    { type: "CDS Region", pattern: legendColor, opacity: 0.7 }
-  ];
+    section.append("text")
+      .attr("x", 0)
+      .attr("y", 0)
+      .attr("font-family", "helvetica neue, helvetica, sans-serif")
+      .attr("font-size", "12px")
+      .attr("font-weight", "bold")
+      .text(title);
 
-  const legendSpacing = 20;
-  const legendRectWidth = 30;
-  const legendRectHeight = 15;
+    const legendSpacing = 20;
+    const legendRectWidth = 30;
+    const legendRectHeight = 15;
 
-  // Add legend items
-  const legendItem = legendGroup.selectAll(".legend-item")
-    .data(legendItems)
+    const legendItem = section.selectAll(".legend-item")
+    .data(items)
     .enter()
     .append("g")
     .attr("class", "legend-item")
     .attr("transform", (d, i) => `translate(0, ${i * legendSpacing + 15})`);
 
-  // Add rectangles for each legend item
   legendItem.append("rect")
     .attr("width", legendRectWidth)
     .attr("height", legendRectHeight)
-    .attr("fill", d => d.pattern)
-    .attr("stroke", legendColor)
+    .attr("fill", d => d.pattern || d.color)
+    .attr("stroke", d => d.stroke || d.color)
     .attr("stroke-width", 1);
 
-  // Add text labels for each legend item
   legendItem.append("text")
     .attr("x", legendRectWidth + 5)
     .attr("y", legendRectHeight / 2)
@@ -138,27 +122,51 @@ export const render = (svg, width, height, uorfs, events = {}) => {
     .attr("font-size", "12px")
     .text(d => d.type);
 
-  // Get the bounding box of the legend
-  const legendBBox = legendGroup.node().getBBox();
-  
-  // Add semi-transparent white background for legend
-  legendGroup.insert("rect", ":first-child")
-    .attr("x", -5)
-    .attr("y", -5)
-    .attr("width", legendBBox.width + 10)
-    .attr("height", legendBBox.height + 10)
-    .attr("fill", "white")
-    .attr("fill-opacity", 0.9)
-    .attr("rx", 5)
-    .attr("ry", 5);
+  return section.node().getBBox().height;
+  };
 
-  // Now position the entire legend group in the top-right
-  legendGroup.attr("transform", `translate(
-    ${width - margin.right - legendBBox.width - 10},
-    ${margin.top + 10}
-  )`);
-  
-  const xAxis = d3.axisBottom(xScale).ticks(5).tickSizeOuter(0);
+// Create region types section
+const regionItems = [
+  { type: "UTR Region", pattern: "url(#legend-utr-pattern)", stroke: legendColor },
+  { type: "CDS Region", pattern: legendColor, stroke: legendColor }
+];
+const regionHeight = createLegendSection("Region Types", regionItems, 0);
+
+// Create start codons section only for present codons
+const codonItems = presentCodons.map(codon => ({
+  type: codon,
+  color: CODON_COLORS[codon]
+}));
+
+// Only create codon section if there are codons to show
+const codonHeight = codonItems.length > 0 ? 
+  createLegendSection("Start Codons", codonItems, regionHeight + 20) : 0;
+
+// Get the bounding box of the entire legend
+const legendBBox = legendGroup.node().getBBox();
+
+// Add semi-transparent white background for legend
+legendGroup.insert("rect", ":first-child")
+  .attr("x", -5)
+  .attr("y", -5)
+  .attr("width", legendBBox.width + 10)
+  .attr("height", legendBBox.height + 10)
+  .attr("fill", "white")
+  .attr("fill-opacity", 0.9)
+  .attr("rx", 5)
+  .attr("ry", 5);
+
+// Position the entire legend group in the top-right
+legendGroup.attr("transform", `translate(
+  ${width - margin.right - legendBBox.width - 10},
+  ${margin.top + 10}
+)`);
+
+
+
+
+
+const xAxis = d3.axisBottom(xScale).ticks(5).tickSizeOuter(0);
   
   const chartContainer = d3.select(svg).append('g')
     .attr('class', 'chart-container');
