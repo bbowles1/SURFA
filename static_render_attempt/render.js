@@ -25,8 +25,11 @@ export const render = (svg, width, height, uorfs, events = {}) => {
   // Get unique start codons present in the data
   const presentCodons = [...new Set(uorfs.regions
     .map(region => region.start_codon)
-    .filter(codon => codon))];
-      
+    .filter(codon => codon !== undefined && codon !== null))];
+  // determine if codons are defined in CODON_COLORS
+  const knownCodons = presentCodons.filter(codon => CODON_COLORS[codon]);
+  const unknownCodons = presentCodons.filter(codon => !CODON_COLORS[codon]);
+        
   // Default color for unknown codons
   const DEFAULT_CODON_COLOR = '#999999';
 
@@ -132,11 +135,19 @@ const regionItems = [
 ];
 const regionHeight = createLegendSection("Region Types", regionItems, 0);
 
-// Create start codons section only for present codons
-const codonItems = presentCodons.map(codon => ({
-  type: codon,
-  color: CODON_COLORS[codon]
-}));
+  // Create start codons section for all present codons
+  const codonItems = [
+    // Known codons with their defined colors
+    ...knownCodons.map(codon => ({
+      type: codon,
+      color: CODON_COLORS[codon]
+    })),
+    // Unknown codons with default color
+    ...unknownCodons.map(codon => ({
+      type: codon,
+      color: DEFAULT_CODON_COLOR
+    }))
+  ];
 
 // Only create codon section if there are codons to show
 const codonHeight = codonItems.length > 0 ? 
