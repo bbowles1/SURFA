@@ -276,6 +276,7 @@ def get_uorfs(sequence, transcript_id):
             'exons': [{
                 'exon':'1',
                 'type':'uorf',
+                'start_codon': row.dna_start_codon,
                 'start': int(row.start_pos),
                 'end': int(row.stop_pos)
                 }],

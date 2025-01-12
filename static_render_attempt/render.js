@@ -1,5 +1,5 @@
 export const render = (svg, width, height, uorfs, events = {}) => {
-  const margin = {top: 10, right: 10, bottom: 25, left: 10};
+  const margin = {top: 10, right: 10, bottom: 75, left: 10};
   const rectHeight = ((height - margin.top - margin.bottom) / uorfs.regions.length) - 4;
   
   const xScale = d3.scaleLinear()
@@ -10,17 +10,38 @@ export const render = (svg, width, height, uorfs, events = {}) => {
       .domain(uorfs.regions.map(d => d.id))
       .range([height - margin.bottom, margin.top]);
   
-  const tColorScale = d3.scaleOrdinal()
-      .domain(uorfs.regions.map(d => d.id))
-      .range(['#855C75', '#D9AF6B', '#AF6458', '#736F4C', '#526A83', '#625377', '#68855C', '#9C9C5E', '#A06177', '#8C785D']);
+  //const tColorScale = d3.scaleOrdinal()
+  //    .domain(uorfs.regions.map(d => d.id))
+  //    .range(['#855C75', '#D9AF6B', '#AF6458', '#736F4C', '#526A83', '#625377', '#68855C', '#9C9C5E', '#A06177', '#8C785D']);
 
+  const CODON_COLORS = {
+    'ATG': '#2E86AB', // Ocean Blue
+    'CTG': '#A23B72', // Berry
+    'TTG': '#F18F01', // Orange
+    'GTG': '#C73E1D', // Red-Orange
+    'TGG': '#3B1F2B', // Deep Purple
+    'TCG': '#44CF6C', // Emerald
+    'UTU': '#662E9B', // Royal Purple
+    'TTT': '#F9C80E', // Yellow
+    'TTC': '#5C4742'  // Brown
+  };
+  
+  // Default color for unknown codons
+  const DEFAULT_CODON_COLOR = '#999999';
+
+  // Modified color scale to use codon colors
+  const tColorScale = d => {
+    const codon = d.start_codon || 'unknown';
+    return CODON_COLORS[codon] || DEFAULT_CODON_COLOR;
+  };
+          
 
   // Create pattern definitions for UTR regions
   const defs = d3.select(svg).append("defs");
   
   // Create a diagonal line pattern for each possible color
   uorfs.regions.forEach(region => {
-    const color = tColorScale(region.id);
+    const color = tColorScale(region);
     
     // Pattern for forward diagonal lines
     defs.append("pattern")
@@ -137,7 +158,6 @@ export const render = (svg, width, height, uorfs, events = {}) => {
     ${margin.top + 10}
   )`);
   
-
   const xAxis = d3.axisBottom(xScale).ticks(5).tickSizeOuter(0);
   
   const chartContainer = d3.select(svg).append('g')
@@ -145,8 +165,19 @@ export const render = (svg, width, height, uorfs, events = {}) => {
   
   d3.select(svg).append("g")
     .attr("transform", `translate(0,${height - margin.bottom})`)
-    .call(xAxis);
-  
+    .call(xAxis).selectAll("text")
+    .style("font-size", "14px");
+
+  // x-axis label
+  d3.select(svg).append("text")
+    .attr("class", "x-axis-label")
+    .attr("text-anchor", "middle")
+    .attr("x", width / 2)
+    .attr("y", height - margin.bottom / 3)
+    .attr("font-family", "helvetica neue, helvetica, sans-serif")
+    .attr("font-size", "18px")
+    .text("Nucleotide Position");
+    
   const tooltip = d3.select(svg).append('text')
     .attr('class', 'tooltip-container')
     .attr('dy', -10)
@@ -194,7 +225,7 @@ export const render = (svg, width, height, uorfs, events = {}) => {
             color.opacity = 0.7;
             return color;
           }
-          return tColorScale(regionD.id);
+          return tColorScale(regionD);
         })
         .attr('stroke', d => tColorScale(regionD.id))
         .on('mouseover', (event) => {
