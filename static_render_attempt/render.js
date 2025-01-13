@@ -11,17 +11,18 @@ export const render = (svg, width, height, uorfs, events = {}) => {
       .range([height - margin.bottom, margin.top]);
   
   const CODON_COLORS = {
-    'ATG': '#2E86AB', // Ocean Blue
-    'CTG': '#A23B72', // Berry
-    'TTG': '#F18F01', // Orange
-    'GTG': '#C73E1D', // Red-Orange
-    'TGG': '#3B1F2B', // Deep Purple
-    'TCG': '#44CF6C', // Emerald
-    'UTU': '#662E9B', // Royal Purple
-    'TTT': '#F9C80E', // Yellow
-    'TTC': '#5C4742'  // Brown
+    'ATG': '#1f77b4',
+    'CTG': '#ff7f0e',
+    'TTG': '#2ca02c',
+    'GTG': '#d62728',
+    'TGG': '#9467bd',
+    'TCG': '#8c564b',
+    'UTU': '#e377c2',
+    'TTT': '#7f7f7f',
+    'TTC': '#bcbd22'
   };
-  
+
+
   // Get unique start codons present in the data
   const presentCodons = [...new Set(uorfs.regions
     .map(region => region.start_codon)
