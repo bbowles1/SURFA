@@ -7,8 +7,9 @@ export const render = (svg, width, height, uorfs, events = {}) => {
       .range([margin.left, width - margin.right]);
   
   const yScale = d3.scaleBand()
-      .domain(uorfs.regions.map(d => d.id))
-      .range([height - margin.bottom, margin.top]);
+    .domain(uorfs.regions.map(d => d.id))
+    .range([height - margin.bottom, margin.top])
+    .padding(0.5);  // Add padding to ensure rectangles fit within bounds
   
   const CODON_COLORS = {
     'ATG': '#1f77b4',
