@@ -65,6 +65,7 @@
         import { render } from './render.js';
         import { Inputs } from './inputs.js';
         import UORFDetailsPanel from './display_details.js';
+        import { initSvgExport } from './exportSvg.js';
 
         let currentVisualization = null;
 
@@ -152,6 +153,13 @@
             React.createElement(UORFDetailsPanel, { region: null }),
             document.getElementById('details-panel')
         );
+
+        // Initialize export functionality
+        const cleanup = initSvgExport('container', 'uorf-diagram');
+
+        // Optional: Cleanup on page unload
+        window.addEventListener('unload', cleanup);
+
     </script>
 </body>
 </html>
