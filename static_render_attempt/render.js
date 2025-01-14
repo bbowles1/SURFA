@@ -44,12 +44,29 @@ export const render = (svg, width, height, uorfs, events = {}) => {
 
   // Create pattern definitions for UTR regions
   const defs = d3.select(svg).append("defs");
+
+  const legendColor = "#625377";  
+
+  // Create a special pattern for the legend
+  defs.append("pattern")
+    .attr("id", "legend-utr-pattern")
+    .attr("patternUnits", "userSpaceOnUse")
+    .attr("width", 8)
+    .attr("height", 8)
+    .append("g")
+    .attr("fill", "none")
+    .attr("stroke", legendColor)
+    .attr("stroke-width", 1)
+    .attr("stroke-opacity", 0.7)
+    .call(g => {
+      g.append("path").attr("d", "M-2,2 l4,-4 M0,8 l8,-8 M6,10 l4,-4");
+      g.append("path").attr("d", "M-2,6 l8,-8 M0,8 l8,-8 M6,2 l4,-4");
+    });
   
-  // Create a diagonal line pattern for each possible color
+  // Create patterns for each region (as before)
   uorfs.regions.forEach(region => {
     const color = tColorScale(region);
     
-    // Pattern for forward diagonal lines
     defs.append("pattern")
       .attr("id", `diagonal-${region.id}`)
       .attr("patternUnits", "userSpaceOnUse")
@@ -61,7 +78,6 @@ export const render = (svg, width, height, uorfs, events = {}) => {
       .attr("stroke-width", 1)
       .attr("stroke-opacity", 0.7);
       
-    // Pattern for backward diagonal lines (creates cross-hatch)
     defs.append("pattern")
       .attr("id", `cross-hatch-${region.id}`)
       .attr("patternUnits", "userSpaceOnUse")
@@ -77,9 +93,6 @@ export const render = (svg, width, height, uorfs, events = {}) => {
         g.append("path").attr("d", "M-2,6 l8,-8 M0,8 l8,-8 M6,2 l4,-4");
       });
   });
-
-
-  const legendColor = "#625377";  
 
   const legendGroup = d3.select(svg).append("g")
     .attr("class", "legend");
