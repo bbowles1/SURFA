@@ -47,7 +47,7 @@ export const render = (svg, width, height, uorfs, events = {}) => {
 
   const legendColor = "#625377";  
 
-  // Create a special pattern for the legend
+  // Create legend pattern
   defs.append("pattern")
     .attr("id", "legend-utr-pattern")
     .attr("patternUnits", "userSpaceOnUse")
@@ -63,7 +63,7 @@ export const render = (svg, width, height, uorfs, events = {}) => {
       g.append("path").attr("d", "M-2,6 l8,-8 M0,8 l8,-8 M6,2 l4,-4");
     });
   
-  // Create patterns for each region (as before)
+  // Create patterns for each region
   uorfs.regions.forEach(region => {
     const color = tColorScale(region);
     
