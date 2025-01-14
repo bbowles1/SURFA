@@ -20,36 +20,28 @@ export const initSvgExport = (containerId, filename = 'visualization') => {
     // Ensure SVG has necessary attributes
     clonedSvg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
     clonedSvg.setAttribute('version', '1.1');
-    
-    // Make sure the SVG has explicit dimensions
-    if (!clonedSvg.hasAttribute('width') && !clonedSvg.hasAttribute('height')) {
-      const bbox = svgElement.getBBox();
-      clonedSvg.setAttribute('width', bbox.width);
-      clonedSvg.setAttribute('height', bbox.height);
-    }
 
-    // Remove any transform on the root SVG element as it can cause issues
-    clonedSvg.removeAttribute('transform');
-
-    // Inline all styles from stylesheets
-    const styleSheets = document.styleSheets;
-    let cssRules = '';
-    for (let sheet of styleSheets) {
-      try {
-        for (let rule of sheet.cssRules) {
-          cssRules += rule.cssText;
-        }
-      } catch (e) {
-        console.warn('Could not access stylesheet rules');
+    // Define D3's default axis styles
+    const d3AxisStyles = `
+      .domain {
+        fill: none;
+        stroke: #000;
       }
-    }
-
-    // Add styles to the SVG
-    if (cssRules) {
-      const styleElement = document.createElementNS('http://www.w3.org/2000/svg', 'style');
-      styleElement.textContent = cssRules;
-      clonedSvg.insertBefore(styleElement, clonedSvg.firstChild);
-    }
+      .tick line {
+        fill: none;
+        stroke: #000;
+      }
+      .tick text {
+        fill: #000;
+        font-size: 14px;
+        font-family: "helvetica neue", helvetica, sans-serif;
+      }
+    `;
+    
+    // Create a style element and add it to the SVG
+    const styleElement = document.createElementNS('http://www.w3.org/2000/svg', 'style');
+    styleElement.textContent = d3AxisStyles;
+    clonedSvg.insertBefore(styleElement, clonedSvg.firstChild);
 
     // Convert to string with XML declaration
     const serializer = new XMLSerializer();
