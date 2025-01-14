@@ -26,7 +26,7 @@ export const render = (svg, width, height, uorfs, events = {}) => {
   const CODON_STYLES = {
     'ATG': {
         background: '#1f77b4',
-        text: '#000000'
+        text: '##FFFFFF'
     },
     'CTG': {
         background: '#ff7f0e',
@@ -35,7 +35,7 @@ export const render = (svg, width, height, uorfs, events = {}) => {
     'TTG': {
       background: '#2ca02c',
       text: '#000000'
-    }
+    },
     'GTG': {
       background: '#d62728',
       text: '#000000'
@@ -66,9 +66,9 @@ export const render = (svg, width, height, uorfs, events = {}) => {
   const presentCodons = [...new Set(uorfs.regions
     .map(region => region.start_codon)
     .filter(codon => codon !== undefined && codon !== null))];
-  // determine if codons are defined in CODON_COLORS
-  const knownCodons = presentCodons.filter(codon => CODON_COLORS[codon]);
-  const unknownCodons = presentCodons.filter(codon => !CODON_COLORS[codon]);
+  // determine if codons are defined in CODON_STYLES
+  const knownCodons = presentCodons.filter(codon => CODON_STYLES[codon]);
+  const unknownCodons = presentCodons.filter(codon => !CODON_STYLES[codon]);
         
   // Default color for unknown codons
   const DEFAULT_CODON_COLOR = '#999999';
@@ -76,7 +76,7 @@ export const render = (svg, width, height, uorfs, events = {}) => {
   // Modified color scale to use codon colors
   const tColorScale = d => {
     const codon = d.start_codon || 'unknown';
-    return CODON_COLORS[codon] || DEFAULT_CODON_COLOR;
+    return CODON_STYLES[codon]?.background || DEFAULT_CODON_COLOR;
   };
           
 
@@ -193,7 +193,7 @@ const regionHeight = createLegendSection("Region Types", regionItems, 0);
     // Known codons with their defined colors
     ...knownCodons.map(codon => ({
       type: codon,
-      color: CODON_COLORS[codon]
+      color: CODON_STYLES[codon]?.background
     })),
     // Unknown codons with default color
     ...unknownCodons.map(codon => ({
