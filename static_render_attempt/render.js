@@ -23,6 +23,44 @@ export const render = (svg, width, height, uorfs, events = {}) => {
     'TTC': '#bcbd22'
   };
 
+  const CODON_STYLES = {
+    'ATG': {
+        background: '#1f77b4',
+        text: '#000000'
+    },
+    'CTG': {
+        background: '#ff7f0e',
+        text: '#000000'
+    },
+    'TTG': {
+      background: '#2ca02c',
+      text: '#000000'
+    }
+    'GTG': {
+      background: '#d62728',
+      text: '#000000'
+    },
+    'TGG': {
+      background: '#9467bd',
+      text: '#000000'
+    },
+    'TCG': {
+      background: '#8c564b',
+      text: '#000000'
+    },
+    'UTU': {
+      background: '#e377c2',
+      text: '#000000'
+    },
+    'TTT': {
+      background: '#7f7f7f',
+      text: '#000000'
+    },
+    'TTC': {
+      background: '#bcbd22',
+      text: '#000000'
+    }
+  };
 
   // Get unique start codons present in the data
   const presentCodons = [...new Set(uorfs.regions
