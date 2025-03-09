@@ -45,6 +45,7 @@ To set up a local server via npm, I used:
     - Bedtools
     - NPM
     - Pandas
+    - UV (just for fun)
 2. Use Dockerfile to serve .html to display a uorf.json file.
 3. Use Python dataloader script to generate uORFs.json
 4. Ensure Dockerfile can both render the uorfs.json for a HUMAN target, then call the html display module.
