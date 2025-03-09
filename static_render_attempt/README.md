@@ -8,21 +8,45 @@ To set up a local server via npm, I used:
 3. `npm run dev` to deploy a local webserver.
 
 
-# Demo Goals:
+# Polish:
 
-1. Add search bar to connect visual to python backend.
+1. Add search bar to connect visual to python backend?
+    - Need to display output in some sort of terminal if this is the route
 2. Add filter for minimum uORF length.
 3. Add checkbox for box labels (hard coded onto uORF boxes).
-4. Add color-coding for start codon identity.
+4. Park all scripts in a separate .js folder
 5. Add xlabel "nucleotide position", add y-label for transcripts versus uORF names
-6. Adjust legend
-    Opacity for CDS must match.
-    Color coding must match transcript regions.
-7. Add SVG export support.
-8. Fix padding - it's cutting off top of graph
+8. Fix SVG render issues:
+    - Purple CDS region is black in InkScape
 9. Add export for uORF dataframe. 
 10. Fix proper start codons for the python backend script.
 
 # Stretch Goals:
 1. Expand to other species / builds
 2. Serve via API rather than Python backend
+3. Convert to python package
+4. Give all uORFs a unique gene-based identifier (ENSG.codon.num) to allow for comparison across transcripts
+    - This would also allow annotation of other expressed transcripts, similar to a PEX measure
+5. Export CSV of uORF annotations
+
+# Demo Goals:
+- Render an SVG and export it
+- Develop a command line implementation that takes a transcript as the only arg
+    - Meaning I must develop an importable database for all (human) transcript regions 
+- CLI must have also have de novo implementation, which can generate a diagram based on a custom FASTA and GTF
+    - The dataloader will ingest a FASTA and, if no matches are found, will raise a warning that the input FASTA seqids do not match
+    - auto-format FASTA can attempt to format BED df IDs to match FASTA, but only if this is a simple change (ie appending chr prefix)
+    - Warning that this may not handle MT sequences or edge cases like patches
+- Must run on a Dockerfile
+    - bedtools + python + npm
+
+# Pipeline Steps
+1. Build a Dockerfile with the following dependencies:
+    - Bedtools
+    - NPM
+    - Pandas
+2. Use Dockerfile to serve .html to display a uorf.json file.
+3. Use Python dataloader script to generate uORFs.json
+4. Ensure Dockerfile can both render the uorfs.json for a HUMAN target, then call the html display module.
+
+
