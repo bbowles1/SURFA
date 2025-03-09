@@ -35,6 +35,7 @@ import numpy as np
 import pybedtools
 import os
 import json
+import subprocess
 
 
 ##########
@@ -50,7 +51,8 @@ source = 'ensembl_havana'
 geneid = 'ENSG00000081189' # MEF2C
 #geneid = 'ENSG00000175894' # TSPEAR
 
-FASTA_path = '/Users/bbowles/Documents/Code/refdata/FASTA/GRCh37/GRCh37_latest_genomic.fna'
+# FASTA_path = '/Users/bbowles/Documents/Code/refdata/FASTA/GRCh37/GRCh37_latest_genomic.fna' # old FASTA path
+FASTA_path = '/Users/bbowles/Documents/Code/refdata/FASTA/GRCh37/release-113/Homo_sapiens.GRCh37.dna_sm.primary_assembly.fa'
 FASTA_dict = '/Users/bbowles/Documents/Code/refdata/FASTA/GRCh37/FASTA_chrom_identifiers.txt'
 
 
@@ -72,7 +74,11 @@ class NpEncoder(json.JSONEncoder):
 
 
 def export_uorfs(uorfs):
-    
+    """_summary_
+
+    :param uorfs: _description_
+    :type uorfs: _type_
+    """
     # Ensure the directory exists
     os.makedirs('./data', exist_ok=True)
     
@@ -83,7 +89,13 @@ def export_uorfs(uorfs):
     
 
 def complement_function(input_FASTA):  # This function translates negative strand nucleotides into their complements, but does not reverse the reading frame - must do this manually
-    
+    """_summary_
+
+    :param input_FASTA: _description_
+    :type input_FASTA: _type_
+    :return: _description_
+    :rtype: _type_
+    """
     nucleotide_dict = {'A':'T', 'C':'G', 'G':'C', 'T':'A', 'N':'N'}
         
     input_FASTA = [nucleotide_dict[k.upper()] for k in input_FASTA]
@@ -94,7 +106,14 @@ def complement_function(input_FASTA):  # This function translates negative stran
 
     
 def get_transcript_FASTA(ensg_df):
-    
+    """_summary_
+
+    :param ensg_df: _description_
+    :type ensg_df: _type_
+    :raises Exception: _description_
+    :return: _description_
+    :rtype: _type_
+    """
     if ensg_df.strand.nunique() != 1:
         raise Exception(f"Multiple strand values associated with transcripts: {','.join(ensg_df.transcript.unique())}")
     strand = ensg_df.strand.iloc[0]
@@ -114,7 +133,6 @@ def get_transcript_FASTA(ensg_df):
 
 
 def score_kozak(codon):
-    
     """
     Score binding strength of each start codon. For now, returns ordinal values
     but is a place holder for more advanced functionality in the future.
@@ -266,6 +284,7 @@ def get_uorfs(sequence, transcript_id):
     # convert to json
     uorf_list = []
     
+    # construct output JSON
     for row in uorfs.itertuples():
         uorf_row = {
             'id': row.uorf_id,
@@ -294,88 +313,47 @@ def get_uorfs(sequence, transcript_id):
     return uorf_list
 
 
-def get_MANE_FASTA(ensg_df, FASTA_path, FASTA_dict):
-
-    # Goal: get UTR sequence and UTR exon bounds for each ENST in the ensembl GRCh37 release
-    # provided input is a MANE GTF for a gene ID of interest
-
-    # get FASTA sequence for each 5'UTR exon
-    BED_df = ensg_df[['seqname','start','end']]
-    BED_df.rename(columns = {'seqname':'chrom', 'start':'chromStart', 'end':'chromEnd'}, inplace=True)
-    BED_df.loc[:, 'chrom'] = 'chr'+ BED_df.chrom
-    BED_df.loc[:, 'chromStart'] = BED_df.chromStart - 1 # adjusts to zero-based BEDtools nucleotide assignment
-
-    # get FASTA sequences
-    print("Obtaining FASTA sequences for all 5'UTR regions.")
-    FASTA_list = get_seq(BED_df, FASTA_path, FASTA_dict)
-
-    ensg_df['FASTA'] = np.asarray(FASTA_list) # read FASTA elements back to the pos_df column
+def fasta_from_stdout(fasta):
+    for line in fasta.splitlines():
+        if line[0] == '>':
+            continue
+        else:
+            yield line
 
 
-    # cut out duplicate entries in df, preferentially keeping entries in ensembl_havana, then havana, then ensembl
-    ID_list = pd.Series(ensg_df.loc[(ensg_df.source == 'ensembl_havana')].transcript.unique())
-    ensg_df.drop(ensg_df.loc[(ensg_df.source == 'havana') & (ensg_df.transcript.isin(ID_list))].index, axis=0, inplace=True)
-    ID_list = ID_list.append((pd.Series(ensg_df.loc[(ensg_df.source == 'havana')].transcript.unique())))
-    ensg_df.drop(ensg_df.loc[(ensg_df.source == 'ensembl') & (ensg_df.transcript.isin(ID_list))].index, axis=0, inplace=True)
-    ID_list = ID_list.append((pd.Series(ensg_df.loc[(ensg_df.source == 'ensembl')].transcript.unique())))
+def get_seq(BED_df, FASTA_path, working_dir, seqid_dict=None): 
+    """Takes input BED-like dataframe and returns a list of FASTA sequences.
 
-    # rank values by start site in ascending order
-    ensg_df = ensg_df.sort_values(by=['start'], ascending=True)
+    :param BED_df: dataframe containing header with columns chrom, chromStart, chromEnd. 0-based coords.
+    :type BED_df: pandas.DataFrame
+    :param FASTA_path: Path to FASTA reference file.
+    :type FASTA_path: str
+    :param working_dir: Path to output dir for intermediate files.
+    :type working_dir: str
+    :param seqid_dict: Dictionary of contigs to map your BED file chromosomes to in your FASTA, defaults to None
+    :type seqid_dict: dict, optional
+    :return: FASTA sequences
+    :rtype: list
+    """
+    if seqid_dict:
+        # remap identifiers
+        BED_df.loc[:, 'chrom'] = BED_df.chrom.map(seqid_dict)
 
-    # append FASTA sequences to the ensg_df - also appends range, not sure this is necessary
-    ENST_FASTA_dict = {}
-    range_dict = {}
-    for ID in ensg_df.transcript.unique():
-        FASTA_list = []
-        range_list = []
-        for row in ensg_df.loc[ensg_df.transcript == ID].itertuples():
-            FASTA_list.append(row.FASTA)
-            range_list.append(range((row.start), (row.stop + 1)))
-        ENST_FASTA_dict.update({row.transcript:FASTA_list})
-        range_dict.update({row.transcript:range_list})
+    # write temporary bedfile
+    tmp_bed = os.path.join(working_dir, 'tmp.bed')
+    BED_df.to_csv(tmp_bed, sep='\t', index=False, header=None)
 
-    # create a range_df with transcript, start, stop, stranf, FASTA, and exon junctions ('FASTA_range' column)
-    range_df = ensg_df[['transcript', 'seqid','start', 'end', 'strand']].drop_duplicates(subset = 'transcript', keep = 'first')
-    range_df.rename(columns={"seqid":"CHROM"}, inplace=True)
-    range_df.reset_index(drop=True, inplace=True)
-    range_df['FASTA'] = range_df.transcript.map(ENST_FASTA_dict)
-    range_df.loc[:, 'FASTA'] = range_df.apply(lambda row : ''.join(row.FASTA), axis = 1)
-    range_df['FASTA_range'] = range_df.transcript.map(range_dict)
+    # format bedtools call
+    cmd = ['bedtools', 'getfasta', '-fi', FASTA_path, '-bed', tmp_bed]
 
-
-
-def get_seq(BED_df, FASTA_path, FASTA_id_path):
+    # call bedtools, capture stdout
+    result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+        
+    # get seq from stdout
+    FASTA_list = list(fasta_from_stdout(result.stdout))
     
-    # get seq using pybedtools
-
-    # create a BED object and attempt to get sequence
-    Bed_obj = pybedtools.BedTool.from_dataframe(BED_df) # create a BedTools object for pybedtools
-    fasta = pybedtools.example_filename(FASTA_path)
-    Bed_obj = Bed_obj.sequence(fi=fasta)
-    FASTA_list = ((open(Bed_obj.seqfn).read())).split('\n') # opens FASTA text file and splits it to list
-    FASTA_list = [ x for x in FASTA_list if ">" not in x ] # remove FASTA line header
-    FASTA_list = [i for i in FASTA_list if i] # remove empty elements from list
-
-    # if pybedtools return is empty, search FASTA for RefSeq identifiers instead
-    if not bool(FASTA_list):
-        
-        # map FASTA names to correct identifiers
-        FASTA_ids = pd.read_csv(FASTA_id_path, sep='\t')[['Abbreviation', 'RefSeq sequence']].set_index(
-            'Abbreviation').to_dict()['RefSeq sequence']
-        
-        # map FASTA IDs
-        BED_df.loc[:, 'chrom'] = BED_df.chrom.map(FASTA_ids)
-
-        # retry search
-        Bed_obj = pybedtools.BedTool.from_dataframe(BED_df)  # create a BedTools object for pybedtools
-        fasta = pybedtools.example_filename(FASTA_path)
-        Bed_obj = Bed_obj.sequence(fi=fasta)
-        FASTA_list = ((open(Bed_obj.seqfn).read())).split('\n')  # opens FASTA text file and splits it to list
-        FASTA_list = [x for x in FASTA_list if ">" not in x]  # remove FASTA line header
-        FASTA_list = [i for i in FASTA_list if i]  # remove empty elements from list
-        FASTA_list = list(map(lambda x: x.upper(), FASTA_list)) # convert all elements to upper case
-
     return FASTA_list
+
 
 def make_bed(ensg_df):
     
