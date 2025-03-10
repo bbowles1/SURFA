@@ -50,4 +50,13 @@ To set up a local server via npm, I used:
 3. Use Python dataloader script to generate uORFs.json
 4. Ensure Dockerfile can both render the uorfs.json for a HUMAN target, then call the html display module.
 
-
+# Containerization
+- Followed examples from https://github.com/astral-sh/uv-docker-example to set up the Dockerfile.
+- Currently working with a uv Dockerfile in base directory.
+- Can build image with `docker build . -t 'uorf-viewer'`.
+- Can run with `docker run -it --rm --entrypoint /bin/bash -v /Users/bbowles/Documents/Code/GitHub/d3-uORF-Viewer:/mnt --name uorf_viewer a1b6bd367053`
+- Copies all code to /app, python version is 3.13.
+- I used uv init to begin a new project, `uv init uorf_viewer --bare`.
+- Eventually, code should be placed in `src` dir.
+- I added dependencies with `uv add pandas numpy`
+- I added an install of npm, but installing the dependencies from the package.json and package-lock.json files is giving me trouble
