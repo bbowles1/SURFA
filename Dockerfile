@@ -21,9 +21,6 @@ RUN apt-get update && apt-get install -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Install NPM dependencies
-# RUN npm ci
-
 # Enable bytecode compilation
 ENV UV_COMPILE_BYTECODE=1
 
@@ -45,6 +42,9 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 
 # Place executables in the environment at the front of the path
 ENV PATH="/app/.venv/bin:$PATH"
+
+# Install NPM dependencies
+RUN npm install
 
 # Reset the entrypoint, don't invoke `uv`
 ENTRYPOINT []
