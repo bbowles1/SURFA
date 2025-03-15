@@ -59,4 +59,4 @@ To set up a local server via npm, I used:
 - I used uv init to begin a new project, `uv init uorf_viewer --bare`.
 - Eventually, code should be placed in `src` dir.
 - I added dependencies with `uv add pandas numpy`
-- I added an install of npm, but installing the dependencies from the package.json and package-lock.json files is giving me trouble
+- I added an install of npm, and ran `npm install` to download the dependencies from the package.json and package-lock.json files.
