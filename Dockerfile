@@ -46,5 +46,8 @@ ENV PATH="/app/.venv/bin:$PATH"
 # Install NPM dependencies
 RUN npm install
 
+# expose flask port
+EXPOSE 5000
+
 # Reset the entrypoint, don't invoke `uv`
 ENTRYPOINT []
