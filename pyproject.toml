@@ -5,6 +5,7 @@ description = "View upstream open reading frames given a transcript."
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
+    "flask>=3.1.0",
     "numpy>=2.2.3",
     "pandas>=2.2.3,<3.0.0",
 ]
