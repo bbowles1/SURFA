@@ -59,4 +59,16 @@ To set up a local server via npm, I used:
 - I used uv init to begin a new project, `uv init uorf_viewer --bare`.
 - Eventually, code should be placed in `src` dir.
 - I added dependencies with `uv add pandas numpy`
+    - This is sufficient to generate a new `pyproject.toml` and `uv.lock` file.
 - I added an install of npm, and ran `npm install` to download the dependencies from the package.json and package-lock.json files.
+
+# Flask Integration
+- I added a script `renderpage.py` to render the webpage using localhost port 8080.
+- I need to rerun the container using port-forwarding as an option: `-p 8080:8080`.
+- Full run command is now `docker run -it --rm --entrypoint /bin/bash -v /Users/bbowles/Documents/Code/GitHub/d3-uORF-Viewer:/mnt --name uorf_viewer -p 8080:8080 49f0bc04d29c`
+- I must call the `renderpage.py` function within a running image.
+- I am not really providing the recommended project structure or JINJA templating that Flask recommends.
+- Here is a good guide to getting started on [flask integration](https://blog.logrocket.com/build-interactive-charts-flask-d3js/).
+
+# Web Hosting
+https://firebase.google.com/docs/hosting/serverless-overview
