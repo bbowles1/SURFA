@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>uORFs Visualization</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+        }
+        #container {
+            position: relative;
+            width: 100%;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        #controls {
+            padding: 20px;
+            flex: none;
+        }
+        #visualization {
+            flex: 1;
+            min-height: 0;
+            position: relative;
+            overflow: auto;
+        }
+        .input-container {
+            margin-bottom: 1rem;
+        }
+        .input-container form {
+            display: flex;
+            flex-direction: row;
+            gap: 8px;
+        }
+        .input-container label {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            font-family: sans-serif;
+        }
+        #details-panel {
+            position: fixed;
+            right: 20px;
+            top: 20px;
+            z-index: 1000;
+        }
+        svg {
+            display: block;
+            min-width: 800px; /* Minimum width to prevent excessive compression */
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <div id="controls"></div>
+        <div id="visualization"></div>
+        <div id="details-panel"></div>
+    </div>
+
+    <script type="module">
+        import { render } from './render.js';
+        import { Inputs } from './inputs.js';
+        import UORFDetailsPanel from './display_details.js';
+        import { initSvgExport } from './exportSvg.js';
+
+        let currentVisualization = null;
+
+        // create the initial checkbox input
+        const selectCodons = Inputs.checkbox(
+            ["ATG", "CTG", "TTG", "GTG", "TGG", "TCG", "UTU", "TTT", "TTC"],
+            {
+                label: "Start Codons",
+                value: ["ATG", "CTG"]
+            }
+        );
+
+        // Add the checkbox element to the controls
+        document.getElementById('controls').appendChild(selectCodons.element);
+
+        // Function to calculate visualization dimensions
+        function getVisDimensions() {
+            const visualizationDiv = document.getElementById('visualization');
+            const width = Math.max(800, visualizationDiv.clientWidth);
+            const height = Math.max(400, visualizationDiv.clientHeight);
+            return { width, height };
+        }
+
+        // Function to update visualization based on selected codons
+        function updateVisualization(selectedCodons) {
+            d3.select("#visualization").select("svg").remove();
+            
+            d3.json("uorfs.json").then(uorfs => {
+                const filteredRegions = Object.assign({}, uorfs, {
+                    regions: uorfs.regions.filter(region => 
+                        selectedCodons.includes(region.start_codon) || region.type === 'transcript'
+                    )
+                });
+                
+                const { width, height } = getVisDimensions();
+                
+                const svg = d3.select("#visualization")
+                    .append("svg")
+                    .attr("width", width)
+                    .attr("height", height);
+                
+                currentVisualization = {
+                    data: filteredRegions,
+                    selectedCodons
+                };
+                
+                render(svg.node(), width, height, filteredRegions, {
+                    onRegionHover: (region) => {
+                        ReactDOM.render(
+                            React.createElement(UORFDetailsPanel, { region }),
+                            document.getElementById('details-panel')
+                        );
+                    },
+                    onRegionLeave: () => {
+                        ReactDOM.render(
+                            React.createElement(UORFDetailsPanel, { region: null }),
+                            document.getElementById('details-panel')
+                        );
+                    }
+                });
+            }).catch(error => {
+                console.error("Error loading the JSON file:", error);
+            });
+        }
+
+        // Handle window resize
+        let resizeTimeout;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(() => {
+                if (currentVisualization) {
+                    updateVisualization(currentVisualization.selectedCodons);
+                }
+            }, 250); // Debounce resize events
+        });
+
+        // Listen for changes to the checkboxes
+        selectCodons.addEventListener('change', updateVisualization);
+
+        // Initial render
+        updateVisualization(selectCodons.value);
+
+        // Initial render of the details panel
+        ReactDOM.render(
+            React.createElement(UORFDetailsPanel, { region: null }),
+            document.getElementById('details-panel')
+        );
+
+        // Initialize export functionality
+        const cleanup = initSvgExport('container', 'uorf-diagram');
+
+    </script>
+</body>
+</html>
