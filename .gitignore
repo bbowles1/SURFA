@@ -1,2 +1,5 @@
 #custom
 .pptx
+
+# python
+__pycache__
