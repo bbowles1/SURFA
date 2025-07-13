@@ -1,5 +1,8 @@
 #custom
 .pptx
+.pdf
+.db
+.sql
 
 # python
 __pycache__
