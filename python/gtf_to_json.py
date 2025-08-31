@@ -419,10 +419,11 @@ def get_seq(BED_df, FASTA_path, working_dir, seqid_dict=None):
         original_chroms = BED_df.chrom.copy()
         BED_df.loc[:, 'chrom'] = BED_df.chrom.map(seqid_dict)
         dropped_chroms = original_chroms.loc[BED_df.chrom.isna()].drop_duplicates()
-        print("\tThe following contigs could not be mapped to their FASTA equivalents and were removed:\n")
-        for i in dropped_chroms:
-            print(f"\t\t{i}")
-        print("\n\tPlease use the seqid-map / seqid-key / seqid-value args to map between the GTF seqid \n\tand your FASTA contigs.")
+        if not dropped_chroms.empty:
+            print("\tThe following contigs could not be mapped to their FASTA equivalents and were removed:\n")
+            for i in dropped_chroms:
+                print(f"\t\t{i}")
+            print("\n\tPlease use the seqid-map / seqid-key / seqid-value args to map between the GTF seqid \n\tand your FASTA contigs.")
         
         # drop unmapped cols
         BED_df = BED_df.loc[BED_df.chrom.notna()]
@@ -515,7 +516,7 @@ def main():
     
     # set params for testing
     gtf_path = "/Users/bbowles/Documents/Code/refdata/MANE/MANE.GRCh38.v1.4.ensembl_genomic.gtf.gz"
-    FASTA_path = '/Users/bbowles/Documents/Code/refdata/FASTA/GRCh37/release-113/Homo_sapiens.GRCh37.dna_sm.primary_assembly.fa'
+    FASTA_path = '/Users/bbowles/Documents/Code/refdata/FASTA/GRCh38/Homo_sapiens.GRCh38.dna.primary_assembly.fa'
     FASTA_dict = '/Users/bbowles/Documents/Code/refdata/FASTA/GRCh37/FASTA_chrom_identifiers.txt'
     output_dir = "/Users/bbowles/Documents/Code/tmp"
     source = "ensembl_havana"
@@ -766,9 +767,14 @@ def main():
     # cds_df
     first_cds
     
+    # rename columns in utr_df
+    utr_df.rename(columns={"seqname":"chrom"}, inplace=True)
+    
+    # force dtypes in UTR_df
+    utr_df.loc[:, 'exon'] = utr_df.exon.astype(int)
 
     # set explicit output cols for SQL db
-    utr_cols = ["transcript","exon","length","rel_start", "rel_stop", 
+    utr_cols = ["transcript","exon","length","rel_start", "rel_stop", "start", "end", "chrom" ,
                      "frame_state", "FASTA"]
 
     # create database
@@ -791,7 +797,7 @@ def main():
 
 
 
-    def query_transcript(database_path, table, transcript):
+    def query_uorf_db(database_path, table, transcript):
         """
         Safely query using context manager for automatic cleanup.
         """
@@ -808,10 +814,10 @@ def main():
 
 
     target_transcript = 'ENST00000504921.7' # MEF2C
-    enst_query = query_transcript(db_path, "transcripts", target_transcript) # transcript
-    utr_query = query_transcript(db_path, "utr", target_transcript) # utr
-    cds_query = query_transcript(db_path, "cds", target_transcript) # cds
-    uorf_query = query_transcript(db_path, "uorfs", target_transcript) # cds
+    enst_query = query_uorf_db(db_path, "transcripts", target_transcript) # transcript
+    utr_query = query_uorf_db(db_path, "utr", target_transcript) # utr
+    cds_query = query_uorf_db(db_path, "cds", target_transcript) # cds
+    uorf_query = query_uorf_db(db_path, "uorfs", target_transcript) # cds
     
     # check for multiple transcript returns
     enst = enst_query.iloc[0]
