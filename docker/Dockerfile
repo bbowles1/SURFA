@@ -50,4 +50,6 @@ RUN npm install
 EXPOSE 5000
 
 # Reset the entrypoint, don't invoke `uv`
-ENTRYPOINT []
+#ENTRYPOINT []
+COPY entrypoint.sh /entrypoint.sh
+ENTRYPOINT ["/entrypoint.sh"]
