@@ -1,0 +1,27 @@
+on: [push]
+
+jobs:
+  hello_world_job:
+    runs-on: ubuntu-latest
+    name: A job to test initial github actions.
+    steps:
+      # To use this repository's private action,
+      # you must check out the repository
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install the latest version of uv and set the python version to 3.13t
+        uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.3.1"
+          checksum: "e11b01402ab645392c7ad6044db63d37e4fd1e745e015306993b07695ea5f9f8"
+          working-directory: /app
+          python-version: 3.13t
+      - run: uv pip install --python=3.13t pip
+      - name: Hello world action step
+        uses: ./ # Uses an action in the root directory
+        id: initial
+        with:
+          who-to-greet: 'ENSG00000157168'
+      # Use the output from the `hello` step
+      - name: Get the output time
+        run: echo "The time was ${{ steps.initial.outputs.version }}"
