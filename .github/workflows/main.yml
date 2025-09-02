@@ -13,7 +13,6 @@ jobs:
         uses: astral-sh/setup-uv@v6
         with:
           version: "0.3.1"
-          checksum: "e11b01402ab645392c7ad6044db63d37e4fd1e745e015306993b07695ea5f9f8"
           working-directory: /app
           python-version: 3.13t
       - run: uv pip install --python=3.13t pip
