@@ -5,7 +5,7 @@ on:
   pull_request:
     branches: [ main ]
     paths:
-      - 'dockers/**'
+      - 'docker/**'
   workflow_dispatch:
 
 jobs:
@@ -22,8 +22,8 @@ jobs:
     - name: Build Docker image
       uses: docker/build-push-action@v5
       with:
-        context: ./dockers
-        file: ./dockers/Dockerfile
+        context: ./docker
+        file: ./docker/Dockerfile
         tags: test-image:latest
         load: true
         cache-from: type=gha
