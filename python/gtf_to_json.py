@@ -344,30 +344,6 @@ def fasta_from_stdout_old_old(fasta):
         else:
             yield line
 
-            
-
-def fasta_from_stdout_old(fasta):
-    """Most memory efficient - process line by line without splitlines()"""
-    current_index = None
-    current_sequence = ""
-    
-    # Process line by line instead of splitting entire string
-    for line in fasta.split('\n'):
-        if line.startswith('>'):
-            # Yield previous sequence if it exists
-            if current_index is not None:
-                yield (current_index, current_sequence)
-            
-            current_index = line.split("::")[0][1:]
-            current_sequence = ""
-        elif line.strip():  # Skip empty lines
-            current_sequence += line
-    
-    # Yield final sequence
-    if current_index is not None:
-        yield (current_index, current_sequence)
-        
-        
         
 def fasta_from_stdout(fasta):
     """Yield (index, sequence) pairs - each sequence isolated"""
@@ -472,6 +448,35 @@ def make_bed(ensg_df):
     return BED_df    
 
 
+def df_to_sequence(input_df, FASTA_path, output_dir, seqid_path, seqid_key, seqid_value):
+    
+    # import BED file
+    BED_df = make_bed(input_df)
+    
+    if seqid_path:
+        
+        # import seqid map
+        seqid_map = pd.read_csv(seqid_path)
+        # convert to dict
+        print("Remapping Seqid value in input BED file.")
+        seqid_dict = produce_seqid_dict(seqid_map, seqid_key, seqid_value)
+        BED_df = get_seq(BED_df, FASTA_path, output_dir, seqid_dict = seqid_dict)
+        
+        if BED_df.FASTA.isna().all():
+            raise Exception("No sequences were retrieved from the FASTA input! Is your GTF correctly formatted?")
+    
+    else:
+    
+        # map FASTA return to input BED df
+        BED_df = get_seq(BED_df, FASTA_path, output_dir)
+        
+    # join FASTA back to input data
+    BED_df.loc[:, "index"] = BED_df["index"].astype(int)
+    BED_df = BED_df.set_index("index").FASTA
+    output_df = input_df.merge(BED_df, left_index=True, right_index=True)
+        
+    return output_df
+
 
 ########
 # MAIN #
@@ -510,6 +515,13 @@ def main():
     source = args.ensembl_source
     seqid_path = args.seqid_map
     output_dir = args.output_dir
+    seqid_key = args.seqid_key
+    seqid_value = args.seqid_value
+    
+    # check that all paths exist
+    for path in [gtf_path, output_dir, FASTA_path]:
+        if not os.path.exists(path):
+            raise Exception(f"Path {path} does not exist!")
 
     #######
     # TMP #
@@ -568,12 +580,6 @@ def main():
     first_cds = cds.groupby("transcript").first().reset_index().drop_duplicates()
     first_cds = first_cds[['transcript','exon', 'length', 'start']]
     first_cds["type"] = "CDS"
-
-    # get CDS start site - used to identify 5' or 3' identity of UTR
-    #CDS_start = ensg_df.loc[ensg_df.feature=='CDS']
-    #CDS_start['transcript'] = CDS_start.attribute.str.split(";").str[1].str.split(' ').str[2].str.strip('"')
-    #CDS_start = CDS_start[["transcript","start"]].drop_duplicates()
-    #CDS_start.rename(columns={"start":"cds_start"}, inplace=True)
 
 
     #################
@@ -658,35 +664,40 @@ def main():
     #########
 
     # get FASTA sequences for entire 5'UTR region
+    if False:
+        # import BED file
+        BED_df = make_bed(utr_df)
     
-    # import BED file
-    BED_df = make_bed(utr_df)
-
-    if seqid_path:
-
-        seqid_key = args.seqid_key
-        seqid_value = args.seqid_value
-
-        # import seqid map
-        seqid_map = pd.read_csv(seqid_path)
-        # convert to dict
-        print("Remapping Seqid value in input BED file.")
-        seqid_dict = produce_seqid_dict(seqid_map, seqid_key, seqid_value)
-        BED_df = get_seq(BED_df, FASTA_path, output_dir, seqid_dict = seqid_dict)
+        if seqid_path:
+    
+            seqid_key = args.seqid_key
+            seqid_value = args.seqid_value
+    
+            # import seqid map
+            seqid_map = pd.read_csv(seqid_path)
+            # convert to dict
+            print("Remapping Seqid value in input BED file.")
+            seqid_dict = produce_seqid_dict(seqid_map, seqid_key, seqid_value)
+            BED_df = get_seq(BED_df, FASTA_path, output_dir, seqid_dict = seqid_dict)
+            
+            if BED_df.FASTA.isna().all():
+                raise Exception("No sequences were retrieved from the FASTA input! Is your GTF correctly formatted?")
+    
+        else:
+    
+            # map FASTA return to input BED df
+            BED_df = get_seq(BED_df, FASTA_path, output_dir)
+    
+    
+        # join FASTA back to input data
+        BED_df.loc[:, "index"] = BED_df["index"].astype(int)
+        BED_df = BED_df.set_index("index").FASTA
+        utr_df = utr_df.merge(BED_df, left_index=True, right_index=True)
         
-        if BED_df.FASTA.isna().all():
-            raise Exception("No sequences were retrieved from the FASTA input! Is your GTF correctly formatted?")
-
-    else:
-
-        # map FASTA return to input BED df
-        BED_df = get_seq(BED_df, FASTA_path, output_dir)
-
-
-    # join FASTA back to input data
-    BED_df.loc[:, "index"] = BED_df["index"].astype(int)
-    BED_df = BED_df.set_index("index").FASTA
-    utr_df = utr_df.merge(BED_df, left_index=True, right_index=True)
+    # new method for retrieving FASTA seq
+    utr_df = df_to_sequence(
+        utr_df, FASTA_path, output_dir, seqid_path, seqid_key, seqid_value)
+    
 
     # drop columns where FASTA sequence could not be mapped
     drop_rows = utr_df.loc[utr_df.FASTA.isna()].index
