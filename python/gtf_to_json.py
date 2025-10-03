@@ -104,8 +104,8 @@ def get_transcript_FASTA(ensg_df):
                        'transcript_FASTA','gene_name']].drop_duplicates().copy()
     
     # subset based on strand
-    pos_df = ensg_df.loc[ensg_df.strand=="+"]
-    neg_df = ensg_df.loc[ensg_df.strand=="-"]
+    pos_df = ensg_df.loc[ensg_df.strand=="+"].copy()
+    neg_df = ensg_df.loc[ensg_df.strand=="-"].copy()
     
     # apply negative complement for negative strands
     neg_df["transcript_FASTA"] = neg_df.transcript_FASTA.str[::-1].apply(complement_function)
@@ -343,31 +343,7 @@ def fasta_from_stdout_old_old(fasta):
             continue
         else:
             yield line
-            
-            
 
-def fasta_from_stdout_old(fasta):
-    """Most memory efficient - process line by line without splitlines()"""
-    current_index = None
-    current_sequence = ""
-    
-    # Process line by line instead of splitting entire string
-    for line in fasta.split('\n'):
-        if line.startswith('>'):
-            # Yield previous sequence if it exists
-            if current_index is not None:
-                yield (current_index, current_sequence)
-            
-            current_index = line.split("::")[0][1:]
-            current_sequence = ""
-        elif line.strip():  # Skip empty lines
-            current_sequence += line
-    
-    # Yield final sequence
-    if current_index is not None:
-        yield (current_index, current_sequence)
-        
-        
         
 def fasta_from_stdout(fasta):
     """Yield (index, sequence) pairs - each sequence isolated"""
@@ -466,9 +442,40 @@ def make_bed(ensg_df):
                  'start':'chromStart',
                  'end':'chromEnd'})
     BED_df.loc[:, 'chromStart'] = BED_df.chromStart.astype(int) - 1
+    BED_df.loc[:, 'chromStart'] = BED_df.chromStart.astype(int).astype(str)
+    BED_df.loc[:, 'chromEnd'] = BED_df.chromEnd.astype(int).astype(str)
 
     return BED_df    
 
+
+def df_to_sequence(input_df, FASTA_path, output_dir, seqid_path, seqid_key, seqid_value):
+    
+    # import BED file
+    BED_df = make_bed(input_df)
+    
+    if seqid_path:
+        
+        # import seqid map
+        seqid_map = pd.read_csv(seqid_path)
+        # convert to dict
+        print("Remapping Seqid value in input BED file.")
+        seqid_dict = produce_seqid_dict(seqid_map, seqid_key, seqid_value)
+        BED_df = get_seq(BED_df, FASTA_path, output_dir, seqid_dict = seqid_dict)
+        
+        if BED_df.FASTA.isna().all():
+            raise Exception("No sequences were retrieved from the FASTA input! Is your GTF correctly formatted?")
+    
+    else:
+    
+        # map FASTA return to input BED df
+        BED_df = get_seq(BED_df, FASTA_path, output_dir)
+        
+    # join FASTA back to input data
+    BED_df.loc[:, "index"] = BED_df["index"].astype(int)
+    BED_df = BED_df.set_index("index").FASTA
+    output_df = input_df.merge(BED_df, left_index=True, right_index=True)
+        
+    return output_df
 
 
 ########
@@ -485,7 +492,6 @@ def main():
     parser = argparse.ArgumentParser(description='Parse uORF information from a GTF into a structured JSON.')
     parser.add_argument('--gtf', required=True, help='Path to input GTF build.')
     parser.add_argument('--fasta', required=True, help='Path to input FASTA file.')
-    parser.add_argument('--fasta-dict', required=True, help='Dictionary to map FASTA contigs.')
     parser.add_argument('--output-dir', required=True, help='Output Directory for files.')
     parser.add_argument('--ensembl-source', required=False, default='ensembl_havana',
                         help='Which GTF Data Source (ie Ensembl, Havana) to use.')
@@ -506,25 +512,44 @@ def main():
     gtf_path = args.gtf
     output_dir = args.output_dir
     FASTA_path = args.fasta
-    FASTA_dict = args. fasta_dict
     source = args.ensembl_source
     seqid_path = args.seqid_map
+    output_dir = args.output_dir
+    seqid_key = args.seqid_key
+    seqid_value = args.seqid_value
+    
+    # check that all paths exist
+    for path in [gtf_path, output_dir, FASTA_path]:
+        if not os.path.exists(path):
+            raise Exception(f"Path {path} does not exist!")
 
     #######
     # TMP #
     #######
     
     # set params for testing
-    gtf_path = "/Users/bbowles/Documents/Code/refdata/MANE/MANE.GRCh38.v1.4.ensembl_genomic.gtf.gz"
-    FASTA_path = '/Users/bbowles/Documents/Code/refdata/FASTA/GRCh38/Homo_sapiens.GRCh38.dna.primary_assembly.fa'
-    FASTA_dict = '/Users/bbowles/Documents/Code/refdata/FASTA/GRCh37/FASTA_chrom_identifiers.txt'
-    output_dir = "/Users/bbowles/Documents/Code/tmp"
-    source = "ensembl_havana"
-    seqid_path = "/Users/bbowles/Documents/Code/GitHub/d3-uORF-Viewer/deprecating-pybedtools/seqid_map.csv"
-    seqid_value='number'
-    seqid_key='chr_abbreviation'
-    geneid = 'ENSG00000081189' # MEF2C
-    working_dir = output_dir
+    if False:
+        gtf_path = "/Users/bbowles/Documents/Code/refdata/MANE/MANE.GRCh38.v1.4.ensembl_genomic.gtf.gz"
+        FASTA_path = '/Users/bbowles/Documents/Code/refdata/FASTA/GRCh38/Homo_sapiens.GRCh38.dna.primary_assembly.fa'
+        output_dir = "/Users/bbowles/Documents/Code/tmp"
+        source = "ensembl_havana"
+        seqid_path = "/Users/bbowles/Documents/Code/GitHub/d3-uORF-Viewer/deprecating-pybedtools/seqid_map.csv"
+        seqid_value='number'
+        seqid_key='chr_abbreviation'
+        working_dir = output_dir
+        
+    # set params for testing
+    if False:
+        # required
+        gtf_path = "/Users/bbowles/Documents/Code/GitHub/d3-uORF-Viewer/tests/mini.gtf.gz"
+        FASTA_path = '/Users/bbowles/Documents/Code/GitHub/d3-uORF-Viewer/tests/minifasta.fa'
+        output_dir = "/Users/bbowles/Documents/Code/tmp"
+        source = "ensembl_havana"
+
+        # optional
+        seqid_path = None
+        seqid_value=None
+        seqid_key=None
 
 
     ###############
@@ -533,7 +558,7 @@ def main():
 
     # Annotate gene_start: the start of coding at the canonical transcript ATG. This is the CDS start position in the Ensembl .gff3.
     ensg_df = pd.read_csv(gtf_path, 
-                        header=0, 
+                        header=None, 
                         sep='\t', comment='#', names=['seqname', 'source', 'feature', 
                                                         'start', 'end', 'score', 'strand', 'frame', 'attribute'])
 
@@ -553,14 +578,8 @@ def main():
 
     # subset to first exon of CDS (which is split between 5' UTR and beginning of CDS)
     first_cds = cds.groupby("transcript").first().reset_index().drop_duplicates()
-    first_cds = first_cds[['transcript','exon', 'length', 'start']]
+    first_cds = first_cds[['seqname','transcript','exon', 'length', 'start','end']]
     first_cds["type"] = "CDS"
-
-    # get CDS start site - used to identify 5' or 3' identity of UTR
-    #CDS_start = ensg_df.loc[ensg_df.feature=='CDS']
-    #CDS_start['transcript'] = CDS_start.attribute.str.split(";").str[1].str.split(' ').str[2].str.strip('"')
-    #CDS_start = CDS_start[["transcript","start"]].drop_duplicates()
-    #CDS_start.rename(columns={"start":"cds_start"}, inplace=True)
 
 
     #################
@@ -643,34 +662,13 @@ def main():
     #########
     # FASTA #
     #########
-
-    # get FASTA sequences for entire 5'UTR region
+        
+    # new method for retrieving FASTA seq
+    utr_df = df_to_sequence(
+        utr_df, FASTA_path, output_dir, seqid_path, seqid_key, seqid_value)
+    first_cds = df_to_sequence(
+        first_cds, FASTA_path, output_dir, seqid_path, seqid_key, seqid_value)
     
-    # import BED file
-    BED_df = make_bed(utr_df)
-
-    if seqid_path:
-
-        seqid_key = args.seqid_key
-        seqid_value = args.seqid_value
-
-        # import seqid map
-        seqid_map = pd.read_csv(seqid_path)
-        # convert to dict
-        print("Remapping Seqid value in input BED file.")
-        seqid_dict = produce_seqid_dict(seqid_map, seqid_key, seqid_value)
-        BED_df = get_seq(BED_df, FASTA_path, output_dir, seqid_dict = seqid_dict)
-
-    else:
-
-        # map FASTA return to input BED df
-        BED_df = get_seq(BED_df, FASTA_path, output_dir, seqid_dict = seqid_dict)
-
-
-    # join FASTA back to input data
-    BED_df.loc[:, "index"] = BED_df["index"].astype(int)
-    BED_df = BED_df.set_index("index").FASTA
-    utr_df = utr_df.merge(BED_df, left_index=True, right_index=True)
 
     # drop columns where FASTA sequence could not be mapped
     drop_rows = utr_df.loc[utr_df.FASTA.isna()].index
@@ -716,10 +714,7 @@ def main():
     count = 0
     n_chunks = math.ceil(transcript_df.shape[0]/size)
     for chunk in chunker(transcript_df, size):
-        
-        if "ENST00000504921.7" in chunk.transcript.values:
-            chunk.to_csv('/Users/bbowles/Documents/Code/GitHub/d3-uORF-Viewer/vectorizing_get_uorfs/chunk_input.csv', index=False)
-                
+                        
         progress = count / n_chunks * 100
         print(f"\rSearching for uORFs: {progress:.1f}%", end='', flush=True)
         
@@ -765,7 +760,7 @@ def main():
     uorf_table
     
     # cds_df
-    first_cds
+    first_cds.drop(columns=["seqname","end"], inplace=True)
     
     # rename columns in utr_df
     utr_df.rename(columns={"seqname":"chrom"}, inplace=True)
@@ -779,7 +774,7 @@ def main():
 
     # create database
     print("Writing output to SQL database.")
-    db_path = '/Users/bbowles/Documents/Code/GitHub/d3-uORF-Viewer/python/uorfs.db'
+    db_path = os.path.join(output_dir, "uorfs.db")
     conn = sqlite3.connect(db_path)
     transcript_df.to_sql('transcripts', conn, if_exists='replace', index=False)
     utr_df[utr_cols].to_sql('utr', conn, if_exists='replace', index=False)
@@ -787,6 +782,7 @@ def main():
     first_cds.to_sql('cds', conn, if_exists='replace', index=False)
     
     conn.close()
+    print(f"Database saved to {db_path}")
 
 
 

@@ -3,12 +3,16 @@
 """
 Created on Sun Jul 20 14:45:57 2025
 
+run tests
+
 @author: bbowles
 """
 
 import sqlite3
 import pandas as pd
 import unittest
+
+db_path = '/app/tests/uorfs.db'
 
 def import_reference(path):
     # convert FASTA entry to sequence
@@ -39,19 +43,6 @@ def complement_function(input_FASTA):  # This function translates negative stran
     
     return new_codon        # output new codons
 
-
-db_path = '/Users/bbowles/Documents/Code/GitHub/d3-uORF-Viewer/python/uorfs.db'
-
-mef2c_exon1 = import_reference("/Users/bbowles/Documents/Code/GitHub/d3-uORF-Viewer/tests/mef2c_exon1_mrna.txt")
-mef2c_full_transcript = import_reference("/Users/bbowles/Documents/Code/GitHub/d3-uORF-Viewer/tests/mef2c_transcript_mrna.txt")
-
-nrg1_exon1 = import_reference("/Users/bbowles/Documents/Code/GitHub/d3-uORF-Viewer/tests/nrg1_exon1_mrna.txt")
-nrg1_full_transcript = import_reference("/Users/bbowles/Documents/Code/GitHub/d3-uORF-Viewer/tests/nrg1_transcript_mrna.txt")
-
-# get CDS length
-
-
-
 def query_uorf_db(database_path, table, transcript):
     """
     Safely query using context manager for automatic cleanup.
@@ -68,19 +59,12 @@ def query_uorf_db(database_path, table, transcript):
         return []
 
 
-target_transcript = 'ENST00000504921.7' # MEF2C
-enst_query = query_uorf_db(db_path, "transcripts", target_transcript) # transcript
-utr_query = query_uorf_db(db_path, "utr", target_transcript) # utr
-
-# get first exon
-exon1 = utr_query.iloc[0].FASTA
-
 class TestSequences(unittest.TestCase):
     
     # NEW TESTS THAT ARE INFORMATIVE
     def test_mef2c_utr_sequence_identity(self):
         # reference file = mef2c_noncoding_exons.fa
-        mef2c_ref_utr = import_reference("/Users/bbowles/Documents/Code/GitHub/d3-uORF-Viewer/tests/mef2c_utr_mrna_sequence.fa")
+        mef2c_ref_utr = import_reference("/app/tests/mef2c_utr_mrna_sequence.fa")
         
         # extract sequences from db
         utr_query = query_uorf_db(db_path, "utr", 'ENST00000504921.7')
@@ -99,7 +83,7 @@ class TestSequences(unittest.TestCase):
         
     def test_nrg1_utr_sequence_identity(self):
         # reference file = mef2c_noncoding_exons.fa
-        nrg1_ref_utr = import_reference("/Users/bbowles/Documents/Code/GitHub/d3-uORF-Viewer/tests/nrg1_utr_mrna_sequence.fa")
+        nrg1_ref_utr = import_reference("/app/tests/nrg1_utr_mrna_sequence.fa")
         
         # extract sequences from db, no processing necessary
         # because A) NRG1 UTR is entirely within exon 1 and 2) NRG1 is positive standed
@@ -112,7 +96,7 @@ class TestSequences(unittest.TestCase):
         test_transcript = 'ENST00000504921.7'
         # len(UTR_exons) + len(CDS) = len(reference)
         mef2c_ref_noncoding_exons_len = len(
-            import_reference("/Users/bbowles/Documents/Code/GitHub/d3-uORF-Viewer/tests/mef2c_noncoding_exons.fa")
+            import_reference("/app/tests/mef2c_noncoding_exons.fa")
             )
         
         # retrieve UTR len
@@ -131,7 +115,7 @@ class TestSequences(unittest.TestCase):
         test_transcript = 'ENST00000405005.8'
         # len(UTR_exons) + len(CDS) = len(reference)
         nrg1_ref_noncoding_exons_len = len(
-            import_reference("/Users/bbowles/Documents/Code/GitHub/d3-uORF-Viewer/tests/nrg1_noncoding_exons.fa")
+            import_reference("/app/tests/nrg1_noncoding_exons.fa")
             )
         
         # retrieve UTR len
@@ -145,9 +129,8 @@ class TestSequences(unittest.TestCase):
         
         self.assertEqual(nrg1_ref_noncoding_exons_len, nrg1_test_noncoding_exons_len)
  
-    
-
-        
 # run checks
 if __name__ == '__main__':
     unittest.main()
+
+

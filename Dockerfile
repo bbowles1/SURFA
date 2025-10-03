@@ -43,6 +43,9 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 # Place executables in the environment at the front of the path
 ENV PATH="/app/.venv/bin:$PATH"
 
+# make test script(s) executable
+RUN chmod +x tests/build_test_db.sh
+
 # Install NPM dependencies
 RUN npm install
 
@@ -50,6 +53,4 @@ RUN npm install
 EXPOSE 5000
 
 # Reset the entrypoint, don't invoke `uv`
-#ENTRYPOINT []
-COPY entrypoint.sh /entrypoint.sh
-ENTRYPOINT ["/entrypoint.sh"]
+ENTRYPOINT []

@@ -1,27 +1,37 @@
-on: [push]
+name: Build Docker Image and Run Tests
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'dockers/**'
+      - '.github/workflows/main.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'docker/**'
+  workflow_dispatch:
 
 jobs:
-  hello_world_job:
+  run_tests:
     runs-on: ubuntu-latest
-    name: A job to test initial github actions.
+    
     steps:
-      # To use this repository's private action,
-      # you must check out the repository
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Install the latest version of uv and set the python version to 3.13t
-        uses: astral-sh/setup-uv@v6
-        with:
-          version: "0.3.1"
-          checksum: "e11b01402ab645392c7ad6044db63d37e4fd1e745e015306993b07695ea5f9f8"
-          working-directory: /app
-          python-version: 3.13t
-      - run: uv pip install --python=3.13t pip
-      - name: Hello world action step
-        uses: ./ # Uses an action in the root directory
-        id: initial
-        with:
-          who-to-greet: 'ENSG00000157168'
-      # Use the output from the `hello` step
-      - name: Get the output time
-        run: echo "The time was ${{ steps.initial.outputs.version }}"
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+    
+    - name: Build Docker image
+      uses: docker/build-push-action@v5
+      with:
+        file: Dockerfile
+        tags: test-image:latest
+        load: true
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+    - name: Run build tests
+      run: |
+        docker run --rm test-image:latest bash -c "tests/build_test_db.sh && python -m unittest discover -s tests -p '*test*.py' -v"
