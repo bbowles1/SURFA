@@ -541,15 +541,15 @@ def main():
     # set params for testing
     if False:
         # required
-        gtf_path = "/Users/bbowles/Documents/Code/GitHub/d3-uORF-Viewer/tests/mini_db/mini.gtf.gz"
-        FASTA_path = '/Users/bbowles/Documents/Code/GitHub/d3-uORF-Viewer/tests/mini_db/minifasta.fa'
+        gtf_path = "/Users/bbowles/Documents/Code/GitHub/d3-uORF-Viewer/tests/mini.gtf.gz"
+        FASTA_path = '/Users/bbowles/Documents/Code/GitHub/d3-uORF-Viewer/tests/minifasta.fa'
         output_dir = "/Users/bbowles/Documents/Code/tmp"
         source = "ensembl_havana"
 
         # optional
-        seqid_path = "/Users/bbowles/Documents/Code/GitHub/d3-uORF-Viewer/deprecating-pybedtools/seqid_map.csv"
-        seqid_value='number'
-        seqid_key='chr_abbreviation'
+        seqid_path = None
+        seqid_value=None
+        seqid_key=None
 
 
     ###############
@@ -578,7 +578,7 @@ def main():
 
     # subset to first exon of CDS (which is split between 5' UTR and beginning of CDS)
     first_cds = cds.groupby("transcript").first().reset_index().drop_duplicates()
-    first_cds = first_cds[['transcript','exon', 'length', 'start']]
+    first_cds = first_cds[['seqname','transcript','exon', 'length', 'start','end']]
     first_cds["type"] = "CDS"
 
 
@@ -697,6 +697,8 @@ def main():
     # new method for retrieving FASTA seq
     utr_df = df_to_sequence(
         utr_df, FASTA_path, output_dir, seqid_path, seqid_key, seqid_value)
+    first_cds = df_to_sequence(
+        first_cds, FASTA_path, output_dir, seqid_path, seqid_key, seqid_value)
     
 
     # drop columns where FASTA sequence could not be mapped
@@ -789,7 +791,7 @@ def main():
     uorf_table
     
     # cds_df
-    first_cds
+    first_cds.drop(columns=["seqname","end"], inplace=True)
     
     # rename columns in utr_df
     utr_df.rename(columns={"seqname":"chrom"}, inplace=True)
