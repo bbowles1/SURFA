@@ -487,7 +487,6 @@ def main():
     parser = argparse.ArgumentParser(description='Parse uORF information from a GTF into a structured JSON.')
     parser.add_argument('--gtf', required=True, help='Path to input GTF build.')
     parser.add_argument('--fasta', required=True, help='Path to input FASTA file.')
-    parser.add_argument('--fasta-dict', required=True, help='Dictionary to map FASTA contigs.')
     parser.add_argument('--output-dir', required=True, help='Output Directory for files.')
     parser.add_argument('--ensembl-source', required=False, default='ensembl_havana',
                         help='Which GTF Data Source (ie Ensembl, Havana) to use.')
@@ -508,10 +507,9 @@ def main():
     gtf_path = args.gtf
     output_dir = args.output_dir
     FASTA_path = args.fasta
-    FASTA_dict = args.fasta_dict
     source = args.ensembl_source
     seqid_path = args.seqid_map
-    working_dir = args.output_dir
+    output_dir = args.output_dir
 
     #######
     # TMP #
@@ -521,7 +519,6 @@ def main():
     if False:
         gtf_path = "/Users/bbowles/Documents/Code/refdata/MANE/MANE.GRCh38.v1.4.ensembl_genomic.gtf.gz"
         FASTA_path = '/Users/bbowles/Documents/Code/refdata/FASTA/GRCh38/Homo_sapiens.GRCh38.dna.primary_assembly.fa'
-        FASTA_dict = '/Users/bbowles/Documents/Code/refdata/FASTA/GRCh37/FASTA_chrom_identifiers.txt'
         output_dir = "/Users/bbowles/Documents/Code/tmp"
         source = "ensembl_havana"
         seqid_path = "/Users/bbowles/Documents/Code/GitHub/d3-uORF-Viewer/deprecating-pybedtools/seqid_map.csv"
@@ -531,15 +528,17 @@ def main():
         
     # set params for testing
     if False:
+        # required
         gtf_path = "/Users/bbowles/Documents/Code/GitHub/d3-uORF-Viewer/tests/mini_db/mini.gtf.gz"
         FASTA_path = '/Users/bbowles/Documents/Code/GitHub/d3-uORF-Viewer/tests/mini_db/minifasta.fa'
-        FASTA_dict = '/Users/bbowles/Documents/Code/refdata/FASTA/GRCh37/FASTA_chrom_identifiers.txt'
         output_dir = "/Users/bbowles/Documents/Code/tmp"
         source = "ensembl_havana"
+
+        # optional
         seqid_path = "/Users/bbowles/Documents/Code/GitHub/d3-uORF-Viewer/deprecating-pybedtools/seqid_map.csv"
         seqid_value='number'
         seqid_key='chr_abbreviation'
-        working_dir = output_dir    
+
 
     ###############
     # DATA IMPORT #
@@ -681,7 +680,7 @@ def main():
     else:
 
         # map FASTA return to input BED df
-        BED_df = get_seq(BED_df, FASTA_path, output_dir, seqid_dict = seqid_dict)
+        BED_df = get_seq(BED_df, FASTA_path, output_dir)
 
 
     # join FASTA back to input data
@@ -793,7 +792,7 @@ def main():
 
     # create database
     print("Writing output to SQL database.")
-    db_path = os.path.join(working_dir, "uorfs.db")
+    db_path = os.path.join(output_dir, "uorfs.db")
     conn = sqlite3.connect(db_path)
     transcript_df.to_sql('transcripts', conn, if_exists='replace', index=False)
     utr_df[utr_cols].to_sql('utr', conn, if_exists='replace', index=False)
