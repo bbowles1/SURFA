@@ -32,6 +32,6 @@ jobs:
         cache-from: type=gha
         cache-to: type=gha,mode=max
 
-    - name: Run unit tests
+    - name: Run build tests
       run: |
-        docker run --rm test-image:latest tests/build_test_db.sh && python -m unittest discover -s tests -p "*test*.py" -v
+        docker run --rm test-image:latest bash -c "tests/build_test_db.sh && python -m unittest discover -s tests -p '*test*.py' -v"
