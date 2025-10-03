@@ -662,37 +662,6 @@ def main():
     #########
     # FASTA #
     #########
-
-    # get FASTA sequences for entire 5'UTR region
-    if False:
-        # import BED file
-        BED_df = make_bed(utr_df)
-    
-        if seqid_path:
-    
-            seqid_key = args.seqid_key
-            seqid_value = args.seqid_value
-    
-            # import seqid map
-            seqid_map = pd.read_csv(seqid_path)
-            # convert to dict
-            print("Remapping Seqid value in input BED file.")
-            seqid_dict = produce_seqid_dict(seqid_map, seqid_key, seqid_value)
-            BED_df = get_seq(BED_df, FASTA_path, output_dir, seqid_dict = seqid_dict)
-            
-            if BED_df.FASTA.isna().all():
-                raise Exception("No sequences were retrieved from the FASTA input! Is your GTF correctly formatted?")
-    
-        else:
-    
-            # map FASTA return to input BED df
-            BED_df = get_seq(BED_df, FASTA_path, output_dir)
-    
-    
-        # join FASTA back to input data
-        BED_df.loc[:, "index"] = BED_df["index"].astype(int)
-        BED_df = BED_df.set_index("index").FASTA
-        utr_df = utr_df.merge(BED_df, left_index=True, right_index=True)
         
     # new method for retrieving FASTA seq
     utr_df = df_to_sequence(
