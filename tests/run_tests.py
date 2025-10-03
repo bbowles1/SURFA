@@ -40,7 +40,8 @@ def complement_function(input_FASTA):  # This function translates negative stran
     return new_codon        # output new codons
 
 
-db_path = '/Users/bbowles/Documents/Code/GitHub/d3-uORF-Viewer/python/uorfs.db'
+#db_path = '/Users/bbowles/Documents/Code/GitHub/d3-uORF-Viewer/python/uorfs.db'
+db_path = '/Users/bbowles/Documents/Code/tmp/uorfs.db'
 
 mef2c_exon1 = import_reference("/Users/bbowles/Documents/Code/GitHub/d3-uORF-Viewer/tests/mef2c_exon1_mrna.txt")
 mef2c_full_transcript = import_reference("/Users/bbowles/Documents/Code/GitHub/d3-uORF-Viewer/tests/mef2c_transcript_mrna.txt")
@@ -145,9 +146,9 @@ class TestSequences(unittest.TestCase):
         
         self.assertEqual(nrg1_ref_noncoding_exons_len, nrg1_test_noncoding_exons_len)
  
-    
 
-        
 # run checks
 if __name__ == '__main__':
     unittest.main()
+
+
