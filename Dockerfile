@@ -43,6 +43,9 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 # Place executables in the environment at the front of the path
 ENV PATH="/app/.venv/bin:$PATH"
 
+# make test script(s) executable
+RUN chmod +x tests/build_test_db.sh
+
 # Install NPM dependencies
 RUN npm install
 

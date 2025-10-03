@@ -94,11 +94,7 @@ mef2c_fasta = padding + mef2c_fasta + padding
 >1 dna_sm:chromosome chromosome:GRCh37:1:1:249250621:1 REF
 coord_system:version:name:start:end:strand
 """
-mef2c_chrom = "5"
-mef2c_header = f">{mef2c_chrom} dna_sm:chromosome chromosome:GRCh37:{mef2c_chrom}:1:{len(mef2c_fasta)+1}:1 REF"
-mef2c_header = f">5 dna:chromosome chromosome:GRCh38:5:1:{len(mef2c_fasta)+1}:1 REF"
-mef2c_header = ">5 dna:chromosome chromosome:GRCh38:5:1:181538259:1 REF"
-nrg1_header = ">5 dna:chromosome chromosome:GRCh38:5:1:181538259:1 REF"
+mef2c_header = ">chr5 dna:chromosome chromosome:GRCh38:5:1:181538259:1 REF"
 
 
 mef2c_df = pd.DataFrame([
@@ -164,10 +160,7 @@ nrg1_fasta = padding + nrg1_exon_1 + nrg1_cds + padding
 
 
 # get header
-nrg1_chrom = "8"
-nrg1_header = f">{nrg1_chrom} dna_sm:chromosome chromosome:GRCh38:{nrg1_chrom}:1:{len(nrg1_fasta)+1}:1 REF"
-nrg1_header = f">8 dna:chromosome chromosome:GRCh38:8:1:{len(nrg1_fasta)+1}:1 REF"
-nrg1_header = ">8 dna:chromosome chromosome:GRCh38:8:1:145138636:1 REF"
+nrg1_header = ">chr8 dna:chromosome chromosome:GRCh38:8:1:145138636:1 REF"
 
 nrg1_df = pd.DataFrame([
     ['nrg1','ENST00000405005.8',1,'exon',nrg1_exon_1+nrg1_cds],
@@ -192,7 +185,7 @@ print(nrg1_df.to_string(index=False))
 
  
 # write FASTA output
-outfasta = "/Users/bbowles/Documents/Code/GitHub/d3-uORF-Viewer/tests/mini_db/minifasta.fa"
+outfasta = "minifasta.fa"
 with open(outfasta, "w") as f:
     lines = [chunk_str(i,60) for i in [
         mef2c_header, '\n', mef2c_fasta, '\n', nrg1_header, '\n', nrg1_fasta]]
@@ -301,7 +294,7 @@ output_gtf.sort_values(by=['seqname','start','end'], ascending = True)
 
 print(output_gtf.shape)
 
-outpath = "/Users/bbowles/Documents/Code/GitHub/d3-uORF-Viewer/tests/mini_db/mini.gtf.gz"
+outpath = "mini.gtf.gz"
 output_gtf.to_csv(outpath, 
                   index=False, sep='\t', compression="gzip", header=None)
 
