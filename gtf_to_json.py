@@ -26,6 +26,10 @@ import argparse
 import sqlite3
 import logging
 
+# custom imports
+from gtf_to_db.fasta_utils import *
+from gtf_to_db.uorf_utils import *
+
 ########
 # MAIN #
 ########
