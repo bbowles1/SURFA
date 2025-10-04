@@ -3,6 +3,7 @@
 .pdf
 .db
 .sql
+justfile
 
 # python
 __pycache__
