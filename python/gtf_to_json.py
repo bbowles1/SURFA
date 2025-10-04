@@ -448,7 +448,7 @@ def make_bed(ensg_df):
     return BED_df    
 
 
-def df_to_sequence(input_df, FASTA_path, output_dir, seqid_path, seqid_key, seqid_value):
+def gtf_to_sequence(input_df, FASTA_path, output_dir, seqid_path, seqid_key, seqid_value):
     
     # import BED file
     BED_df = make_bed(input_df)
@@ -664,9 +664,9 @@ def main():
     #########
         
     # new method for retrieving FASTA seq
-    utr_df = df_to_sequence(
+    utr_df = gtf_to_sequence(
         utr_df, FASTA_path, output_dir, seqid_path, seqid_key, seqid_value)
-    first_cds = df_to_sequence(
+    first_cds = gtf_to_sequence(
         first_cds, FASTA_path, output_dir, seqid_path, seqid_key, seqid_value)
     
 
