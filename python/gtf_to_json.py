@@ -27,6 +27,7 @@ import json
 import subprocess
 import argparse
 import sqlite3
+import logging
 
 
 #############
@@ -94,6 +95,10 @@ def get_transcript_FASTA(ensg_df):
     :return: Strand corrected ensg-df, where FASTA seq has been converted to reverse comp for negative strands
     :rtype: pandas.DataFrame
     """
+    
+    logger = logging.getLogger(__name__) 
+    logger.info(f"Retrieving transcript FASTA.")
+    
     if len(ensg_df.groupby("transcript").strand.nunique().unique()) > 1:
         # there was an error inferring strand identity
         raise Exception("Multiple strand values associated with input transcripts!")
@@ -198,6 +203,9 @@ def get_uorfs(input_df):
     :return: Pandas dataframe containing uORF information
     :rtype: pandas Data.Frame
     """    
+    
+    logger = logging.getLogger(__name__)
+    logger.info("Retrieving uORFs from input dataframe of FASTA sequence.")
 
     # convert input to upper
     FASTA_df = input_df.copy()
@@ -257,6 +265,7 @@ def get_uorfs(input_df):
     uorf_df["stop_codon_pos"] = uorf_df.codon_pairs.str[1].str[1]
     
     # recode missing stop codons - None entries indicate uORF reads into main CDS.
+    logger.debug("Recoding missing stop codons as NO_UTR_STOP.")
     uorf_df.loc[uorf_df.stop_codon.isna(), "stop_codon"] = "NO_UTR_STOP"
     
     # get uORF sequence from transcript FASTA
@@ -325,24 +334,9 @@ def produce_seqid_dict(seqid_map, key, value):
     :param value: Column to use as value in the seqid mapping. Should match FASTA seqid.
     :type value: str
     """
-
+    logger = logging.getLogger(__name__)
+    logger.info("Generating a map of contig identifiers.")
     return(seqid_map.set_index(key)[value].to_dict())
-
-def fasta_from_stdout_old_old(fasta):
-    """Unpack FASTA lines from stdout
-
-    :param fasta: stdout stream from subprocess Bedtools call
-    :type fasta: subprocess.CompletedProcess.stdout
-    :yield: FASTA sequence return from subprocess .stdout
-    :rtype: str
-    """
-
-    for line in fasta.splitlines():
-        if line[0] == '>':
-            # line is FASTA ID row
-            continue
-        else:
-            yield line
 
         
 def fasta_from_stdout(fasta):
@@ -384,6 +378,9 @@ def get_seq(BED_df, FASTA_path, working_dir, seqid_dict=None):
     :rtype: Pandas Dataframe
     """
 
+    logger = logging.getLogger(__name__)
+    logger.info("Retrieving FASTA sequence using input BED file.")
+
     if seqid_dict:
         
         # raise warning if there are empty chrom values
@@ -396,23 +393,26 @@ def get_seq(BED_df, FASTA_path, working_dir, seqid_dict=None):
         BED_df.loc[:, 'chrom'] = BED_df.chrom.map(seqid_dict)
         dropped_chroms = original_chroms.loc[BED_df.chrom.isna()].drop_duplicates()
         if not dropped_chroms.empty:
-            print("\tThe following contigs could not be mapped to their FASTA equivalents and were removed:\n")
+            logger.warning("Some contigs could not be mapped to their FASTA equivalents using the input files.")
             for i in dropped_chroms:
-                print(f"\t\t{i}")
-            print("\n\tPlease use the seqid-map / seqid-key / seqid-value args to map between the GTF seqid \n\tand your FASTA contigs.")
+                logger.warning(f"Contig {i} could not be mapped between GTF and BED file and will not be included in the output database.")
+            logger.warning("Please use the seqid-map / seqid-key / seqid-value args to map between the GTF seqid and your FASTA contigs.")
+
         
         # drop unmapped cols
         BED_df = BED_df.loc[BED_df.chrom.notna()]
 
     # add identifier to bedfile
-    BED_df["index"] = BED_df.index.astype(str)
+    BED_df["index"] = BED_df.index.astype(str).copy()
 
     # write temporary bedfile
     tmp_bed = os.path.join(working_dir, 'tmp.bed')
+    logger.info(f"Writing temporary BED file to {tmp_bed}.")
     BED_df.to_csv(tmp_bed, sep='\t', index=False, header=None)
 
     # format bedtools call
     cmd = ['bedtools', 'getfasta', '-name', '-fi', FASTA_path, '-bed', tmp_bed]
+    logger.info(f"Running subprocess call {''.join(cmd)}.")
 
     # call bedtools, capture stdout
     result = subprocess.run(cmd, capture_output=True, text=True, check=True)
@@ -424,11 +424,13 @@ def get_seq(BED_df, FASTA_path, working_dir, seqid_dict=None):
     FASTA_list.loc[:, "index"] = FASTA_list["index"].astype(str)
     
     # merge FASTA into original BED df
+    logger.info("Merging retrieve FASTA sequence with input dataframe.")
     BED_df = BED_df.merge(FASTA_list, on='index', how='outer')
 
     # remove tmp file
     if os.path.exists(tmp_bed):
         os.remove(tmp_bed)
+        logger.info(f"Removing temporary BED file {tmp_bed}.")
     
     return BED_df
 
@@ -436,11 +438,14 @@ def get_seq(BED_df, FASTA_path, working_dir, seqid_dict=None):
 
 def make_bed(ensg_df):
     
+    logger = logging.getLogger(__name__)
+    logger.info("Converting input dataframe to BED format.")
+    
     # make BED-compatable dataframe
     BED_df = ensg_df[['seqname','start','end']].rename(
         columns={'seqname':'chrom',
                  'start':'chromStart',
-                 'end':'chromEnd'})
+                 'end':'chromEnd'}).copy()
     BED_df.loc[:, 'chromStart'] = BED_df.chromStart.astype(int) - 1
     BED_df.loc[:, 'chromStart'] = BED_df.chromStart.astype(int).astype(str)
     BED_df.loc[:, 'chromEnd'] = BED_df.chromEnd.astype(int).astype(str)
@@ -450,19 +455,26 @@ def make_bed(ensg_df):
 
 def gtf_to_sequence(input_df, FASTA_path, output_dir, seqid_path, seqid_key, seqid_value):
     
+    logger = logging.getLogger(__name__)
+    logger.info("Retrieving FASTA sequence for GTF input.")
+    
     # import BED file
     BED_df = make_bed(input_df)
     
     if seqid_path:
         
+        
         # import seqid map
+        logger.info(f"Importing contig mappings from {seqid_path}.")
         seqid_map = pd.read_csv(seqid_path)
+        
         # convert to dict
-        print("Remapping Seqid value in input BED file.")
+        logger.info("Remapping contig identifiers in the input BED file using seqid key/values.")
         seqid_dict = produce_seqid_dict(seqid_map, seqid_key, seqid_value)
         BED_df = get_seq(BED_df, FASTA_path, output_dir, seqid_dict = seqid_dict)
         
         if BED_df.FASTA.isna().all():
+            logger.error("No sequences were retrieved from the FASTA input! Is your GTF correctly formatted?")
             raise Exception("No sequences were retrieved from the FASTA input! Is your GTF correctly formatted?")
     
     else:
@@ -471,6 +483,7 @@ def gtf_to_sequence(input_df, FASTA_path, output_dir, seqid_path, seqid_key, seq
         BED_df = get_seq(BED_df, FASTA_path, output_dir)
         
     # join FASTA back to input data
+    logger.info("Joining FASTA sequence back to input GTF.")
     BED_df.loc[:, "index"] = BED_df["index"].astype(int)
     BED_df = BED_df.set_index("index").FASTA
     output_df = input_df.merge(BED_df, left_index=True, right_index=True)
@@ -518,9 +531,22 @@ def main():
     seqid_key = args.seqid_key
     seqid_value = args.seqid_value
     
+    # setup logging
+    logger = logging.getLogger(__name__)
+    logging.basicConfig(
+        format='%(asctime)s - %(name)s - %(funcName)s - %(levelname)s - %(message)s',
+        level=logging.INFO,
+        handlers=[
+            logging.FileHandler('gtf_to_json.log'),
+            logging.StreamHandler()
+        ])
+    logger.info('Beginning database build.')
+
+    
     # check that all paths exist
     for path in [gtf_path, output_dir, FASTA_path]:
         if not os.path.exists(path):
+            logger.error(f"Input path {path} does not exist!")
             raise Exception(f"Path {path} does not exist!")
 
     #######
@@ -536,7 +562,6 @@ def main():
         seqid_path = "/Users/bbowles/Documents/Code/GitHub/d3-uORF-Viewer/deprecating-pybedtools/seqid_map.csv"
         seqid_value='number'
         seqid_key='chr_abbreviation'
-        working_dir = output_dir
         
     # set params for testing
     if False:
@@ -564,6 +589,8 @@ def main():
 
     # subset to source
     ensg_df = ensg_df.loc[ensg_df.source==source]
+    logger.info(f'Subsetting to dataframe source {source}.')
+
 
     ####################
     # EXTRACT CDS INFO #
@@ -617,7 +644,9 @@ def main():
                        on=['transcript'], how='left')
     
     # drop rows where CDS start could not be mapped
-    print("Dropping rows where CDS start is not defined.")
+    no_cds_rows = utr_df.loc[utr_df.cds_start.notna()].shape[0]
+    if no_cds_rows > 0:
+        logger.warning(f"Removed {no_cds_rows} rows where CDS start is not defined in the input GTF.")
     utr_df = utr_df.loc[utr_df.cds_start.notna()]
 
     # determine UTR status
@@ -662,13 +691,17 @@ def main():
     #########
     # FASTA #
     #########
-        
+    
+    logger.info("Matching GTF to FASTA sequences...")    
+    
     # new method for retrieving FASTA seq
     utr_df = gtf_to_sequence(
         utr_df, FASTA_path, output_dir, seqid_path, seqid_key, seqid_value)
     first_cds = gtf_to_sequence(
         first_cds, FASTA_path, output_dir, seqid_path, seqid_key, seqid_value)
     
+    logger.info("FASTA sequences retrieved.")    
+
 
     # drop columns where FASTA sequence could not be mapped
     drop_rows = utr_df.loc[utr_df.FASTA.isna()].index
@@ -706,6 +739,7 @@ def main():
     # 4. Write to sqlite
     # 5. Make function to unpack sqlite -> JSON
 
+    logger.info("Searching transcript sequences for upstream open reading frames...")    
     
     # iterate over transcripts in chunks
     # extrat uORF sequenes
@@ -724,6 +758,8 @@ def main():
         count+=1
     print("\rSearching for uORFs: 100%\n", end='', flush=True)
     uorf_table = pd.concat(uorf_list)
+    
+    logger.info("Upstream open reading frames identified.")    
 
     # sort, add a unique uORF identifier
     uorf_table = uorf_table.sort_values(by=["transcript","start_codon",
@@ -773,7 +809,8 @@ def main():
                      "frame_state", "FASTA"]
 
     # create database
-    print("Writing output to SQL database.")
+    logger.info("Writing output to SQL database.")
+    
     db_path = os.path.join(output_dir, "uorfs.db")
     conn = sqlite3.connect(db_path)
     transcript_df.to_sql('transcripts', conn, if_exists='replace', index=False)
@@ -782,123 +819,124 @@ def main():
     first_cds.to_sql('cds', conn, if_exists='replace', index=False)
     
     conn.close()
+    logger.info(f"Database saved to {db_path}.")
     print(f"Database saved to {db_path}")
 
 
-
-    # locate example data for MEF2C
-    transcript_df.loc[transcript_df.transcript == "ENST00000504921.7"].iloc[0]
-    exons.loc[exons.transcript == "ENST00000504921.7"].iloc[0]
-    uorf_table.loc[uorf_table.transcript == "ENST00000504921.7"].iloc[0]
-
-
-
-    def query_uorf_db(database_path, table, transcript):
-        """
-        Safely query using context manager for automatic cleanup.
-        """
-        if table not in ['transcripts','utr','uorfs','cds']:
-            raise Exception("SQL table not found in database.")
-        try:
-            with sqlite3.connect(database_path) as conn:
-                query=f"SELECT * FROM {table} WHERE transcript = ?"
-                df = pd.read_sql_query(query, conn, params=(transcript,))
-                return df
-        except sqlite3.Error as e:
-            print(f"Database error: {e}")
-            return []
-
-
-    target_transcript = 'ENST00000504921.7' # MEF2C
-    enst_query = query_uorf_db(db_path, "transcripts", target_transcript) # transcript
-    utr_query = query_uorf_db(db_path, "utr", target_transcript) # utr
-    cds_query = query_uorf_db(db_path, "cds", target_transcript) # cds
-    uorf_query = query_uorf_db(db_path, "uorfs", target_transcript) # cds
+    if False:
     
-    # check for multiple transcript returns
-    enst = enst_query.iloc[0]
-    utr = utr_query.iloc[0]
-    cds = cds_query.iloc[0]
+        # locate example data for MEF2C
+        transcript_df.loc[transcript_df.transcript == "ENST00000504921.7"].iloc[0]
+        exons.loc[exons.transcript == "ENST00000504921.7"].iloc[0]
+        uorf_table.loc[uorf_table.transcript == "ENST00000504921.7"].iloc[0]
     
-    def format_utr(utr_tuple):
+    
+    
+        def query_uorf_db(database_path, table, transcript):
+            """
+            Safely query using context manager for automatic cleanup.
+            """
+            if table not in ['transcripts','utr','uorfs','cds']:
+                raise Exception("SQL table not found in database.")
+            try:
+                with sqlite3.connect(database_path) as conn:
+                    query=f"SELECT * FROM {table} WHERE transcript = ?"
+                    df = pd.read_sql_query(query, conn, params=(transcript,))
+                    return df
+            except sqlite3.Error as e:
+                print(f"Database error: {e}")
+                return []
+    
+    
+        target_transcript = 'ENST00000504921.7' # MEF2C
+        enst_query = query_uorf_db(db_path, "transcripts", target_transcript) # transcript
+        utr_query = query_uorf_db(db_path, "utr", target_transcript) # utr
+        cds_query = query_uorf_db(db_path, "cds", target_transcript) # cds
+        uorf_query = query_uorf_db(db_path, "uorfs", target_transcript) # cds
         
-        out_json = {
-            "exon": utr_tuple.exon,
-            "type": "utr",
-            "start": utr_tuple.rel_start,
-            "end": utr_tuple.rel_stop
-            }
-        return out_json
-    
-    
-    def format_cds(cds_tuple, cds_start):
-        out_json = {
-            "exon": cds_tuple.exon,
-            "type": "cds",
-            "start": cds_start,
-            "end": cds_start + cds_tuple.length
-            }
-        return out_json
-    
+        # check for multiple transcript returns
+        enst = enst_query.iloc[0]
+        utr = utr_query.iloc[0]
+        cds = cds_query.iloc[0]
         
-    transcript_exons = [format_utr(row) for row in utr_query.itertuples()] + [
-        format_cds(cds_query.iloc[0], utr_query.rel_stop.iloc[-1])]
-        
-    # format transcript block of JSON (transcript meta + exons)
-    transcript_block = {
-        "id": enst.transcript,
-        "type": "transcript",
-        "start": 0,
-        "end": enst.length,
-        "exons": transcript_exons
-        }
-
-    # format uORF blocks    
-    def format_uorfs(uorf_tuple):
-        uorf_start = uorf_tuple.rel_start_pos
-        uorf_stop = uorf_tuple.rel_stop_pos
-        out_json = {
-            "id": uorf_tuple.uorf_id,
-            "type": "uorf",
-            "frame": uorf_tuple.frame,
-            "start": uorf_start,
-            "end": uorf_stop,
-            "exons": [
-                {
-                    "exon": "1",
-                    "type": "uorf",
-                    "start_codon": uorf_tuple.start_codon,
-                    "start": uorf_start,
-                    "end": uorf_stop
-                }
-            ],
-            "start_codon": uorf_tuple.start_codon,
-            "stop_codon": uorf_tuple.stop_codon,
-            "length": uorf_tuple.uorf_length,
-            "sequence": uorf_tuple.uORF_FASTA
-            }
-        return out_json
-
-    uorf_block = [format_uorfs(row) for row in uorf_query.itertuples()]
-    
-    uorf_json = {
-        "gene":enst.gene_id,
-        "start":0,
-        "end":enst.length,
-        "regions": [
-            [transcript_block] + uorf_block
-            ]
-        }
-
-    # print first element of uORF block for debugging
-    print(json.dumps(uorf_block[0], indent=4))
-
-
-    ########
-    # MAIN #
-    ########
+        def format_utr(utr_tuple):
             
+            out_json = {
+                "exon": utr_tuple.exon,
+                "type": "utr",
+                "start": utr_tuple.rel_start,
+                "end": utr_tuple.rel_stop
+                }
+            return out_json
         
+        
+        def format_cds(cds_tuple, cds_start):
+            out_json = {
+                "exon": cds_tuple.exon,
+                "type": "cds",
+                "start": cds_start,
+                "end": cds_start + cds_tuple.length
+                }
+            return out_json
+        
+            
+        transcript_exons = [format_utr(row) for row in utr_query.itertuples()] + [
+            format_cds(cds_query.iloc[0], utr_query.rel_stop.iloc[-1])]
+            
+        # format transcript block of JSON (transcript meta + exons)
+        transcript_block = {
+            "id": enst.transcript,
+            "type": "transcript",
+            "start": 0,
+            "end": enst.length,
+            "exons": transcript_exons
+            }
+    
+        # format uORF blocks    
+        def format_uorfs(uorf_tuple):
+            uorf_start = uorf_tuple.rel_start_pos
+            uorf_stop = uorf_tuple.rel_stop_pos
+            out_json = {
+                "id": uorf_tuple.uorf_id,
+                "type": "uorf",
+                "frame": uorf_tuple.frame,
+                "start": uorf_start,
+                "end": uorf_stop,
+                "exons": [
+                    {
+                        "exon": "1",
+                        "type": "uorf",
+                        "start_codon": uorf_tuple.start_codon,
+                        "start": uorf_start,
+                        "end": uorf_stop
+                    }
+                ],
+                "start_codon": uorf_tuple.start_codon,
+                "stop_codon": uorf_tuple.stop_codon,
+                "length": uorf_tuple.uorf_length,
+                "sequence": uorf_tuple.uORF_FASTA
+                }
+            return out_json
+    
+        uorf_block = [format_uorfs(row) for row in uorf_query.itertuples()]
+        
+        uorf_json = {
+            "gene":enst.gene_id,
+            "start":0,
+            "end":enst.length,
+            "regions": [
+                [transcript_block] + uorf_block
+                ]
+            }
+    
+        # print first element of uORF block for debugging
+        print(json.dumps(uorf_block[0], indent=4))
+
+
+########
+# MAIN #
+########
+
 if __name__ == "__main__":
     main()
 
