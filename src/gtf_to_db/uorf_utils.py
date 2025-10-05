@@ -65,7 +65,7 @@ def match_codons(start_codons, stop_codons):
 
 def return_FASTA(FASTA, codon_tuple):
     # check if stop is None
-    if codon_tuple[1] == None:
+    if codon_tuple[1] is None:
         return FASTA[codon_tuple[0][1]:]
     else:
         return FASTA[codon_tuple[0][1]:codon_tuple[1][1]+3]
@@ -375,7 +375,7 @@ def gtf_to_uorf_db(gtf_path,
     # drop columns where FASTA sequence could not be mapped
     drop_rows = utr_df.loc[utr_df.FASTA.isna()].index
     if not drop_rows.empty:
-        warnings.warn(f"{len(drop_rows)} FASTA sequences could not be mapped to the input GTF.")
+        logger.warnings(f"{len(drop_rows)} FASTA sequences could not be mapped to the input GTF.")
     utr_df = utr_df.loc[utr_df.FASTA.notna()]
 
 
@@ -492,3 +492,5 @@ def gtf_to_uorf_db(gtf_path,
     print(f"Database saved to {db_path}")
 
 
+__all__ = ['chunker','score_kozak','get_codons','fasta_codon_search','filter_codons','filter_codons','match_codons',
+           'return_FASTA', 'return_FASTA_optimized','get_uorfs','import_reference','gtf_to_uorf_db']

@@ -4,8 +4,9 @@ import os
 import subprocess
 
 
-def complement_function(input_FASTA):  # This function translates negative strand nucleotides into their complements, but does not reverse the reading frame - must do this manually
-    """FASTA string
+def complement_function(input_FASTA: str) -> str:
+    """ This function translates negative strand nucleotides into their complements, 
+    but does not reverse the reading frame - must do this manually
 
     :param input_FASTA: FASTA nucleotide sequence
     :type input_FASTA: str
@@ -218,3 +219,6 @@ def gtf_to_sequence(input_df, FASTA_path, output_dir, seqid_path, seqid_key, seq
     output_df = input_df.merge(BED_df, left_index=True, right_index=True)
         
     return output_df
+
+__all__ = ['complement_function', 'get_transcript_FASTA', 'produce_seqid_dict', 'fasta_from_stdout','get_seq',
+           'make_bed', 'gtf_to_sequence']

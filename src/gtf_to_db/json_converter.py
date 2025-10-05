@@ -44,3 +44,6 @@ def query_uorf_db(database_path, table, transcript):
     except sqlite3.Error as e:
         print(f"Database error: {e}")
         return []
+
+
+__all__ = ['NpEncoder','export_uorfs','query_uorf_db']
