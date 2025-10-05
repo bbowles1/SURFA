@@ -8,56 +8,14 @@ run tests
 @author: bbowles
 """
 
-import sqlite3
-import pandas as pd
 import unittest
 
+# custom imports
+from gtf_to_db.fasta_utils import complement_function
+from gtf_to_db.uorf_utils import import_reference
+from gtf_to_db.json_converter import query_uorf_db
+
 db_path = '/app/tests/uorfs.db'
-
-def import_reference(path):
-    # convert FASTA entry to sequence
-    sequence = []
-    with open(path) as f:
-        lines = f.readlines()
-        for line in lines:
-            if (">" in line) or ("#" in line):
-                pass
-            else:
-                sequence.append(line.strip(" \n"))
-    return "".join(sequence)
-
-
-def complement_function(input_FASTA):  # This function translates negative strand nucleotides into their complements, but does not reverse the reading frame - must do this manually
-    """FASTA string
-
-    :param input_FASTA: FASTA nucleotide sequence
-    :type input_FASTA: str
-    :return: Output nucleotide string converted to reverse compliment seq
-    :rtype: str
-    """
-    nucleotide_dict = {'A':'T', 'C':'G', 'G':'C', 'T':'A', 'N':'N'}
-        
-    input_FASTA = [nucleotide_dict[k.upper()] for k in input_FASTA]
-       
-    new_codon = ''.join(input_FASTA)
-    
-    return new_codon        # output new codons
-
-def query_uorf_db(database_path, table, transcript):
-    """
-    Safely query using context manager for automatic cleanup.
-    """
-    if table not in ['transcripts','utr','uorfs','cds']:
-        raise Exception("SQL table not found in database.")
-    try:
-        with sqlite3.connect(database_path) as conn:
-            query=f"SELECT * FROM {table} WHERE transcript = ?"
-            df = pd.read_sql_query(query, conn, params=(transcript,))
-            return df
-    except sqlite3.Error as e:
-        print(f"Database error: {e}")
-        return []
-
 
 class TestSequences(unittest.TestCase):
     
