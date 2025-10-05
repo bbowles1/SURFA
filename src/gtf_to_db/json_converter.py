@@ -1,3 +1,9 @@
+import json
+import numpy as np
+import os
+import sqlite3
+import pandas as pd
+
 class NpEncoder(json.JSONEncoder):
     # encoder used to write json
     def default(self, obj):
@@ -23,3 +29,18 @@ def export_uorfs(uorfs):
         #json.dump(uorfs, f)
         json.dump(uorfs, f, cls=NpEncoder)
     
+
+def query_uorf_db(database_path, table, transcript):
+    """
+    Safely query using context manager for automatic cleanup.
+    """
+    if table not in ['transcripts','utr','uorfs','cds']:
+        raise Exception("SQL table not found in database.")
+    try:
+        with sqlite3.connect(database_path) as conn:
+            query=f"SELECT * FROM {table} WHERE transcript = ?"
+            df = pd.read_sql_query(query, conn, params=(transcript,))
+            return df
+    except sqlite3.Error as e:
+        print(f"Database error: {e}")
+        return []

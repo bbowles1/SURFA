@@ -1,3 +1,9 @@
+import logging
+import pandas as pd
+import os
+import subprocess
+
+
 def complement_function(input_FASTA):  # This function translates negative strand nucleotides into their complements, but does not reverse the reading frame - must do this manually
     """FASTA string
 
@@ -26,7 +32,7 @@ def get_transcript_FASTA(ensg_df):
     """
     
     logger = logging.getLogger(__name__) 
-    logger.info(f"Retrieving transcript FASTA.")
+    logger.info("Retrieving transcript FASTA.")
     
     if len(ensg_df.groupby("transcript").strand.nunique().unique()) > 1:
         # there was an error inferring strand identity
@@ -109,7 +115,7 @@ def get_seq(BED_df, FASTA_path, working_dir, seqid_dict=None):
         # raise warning if there are empty chrom values
         empty_chrom_fields = BED_df.chrom.isna().sum()
         if empty_chrom_fields > 0:
-            warnings.warn(f"GTF file used for FASTA retrieval includes {empty_chrom_fields} empty seqids.")
+            logger.warning(f"GTF file used for FASTA retrieval includes {empty_chrom_fields} empty seqids.")
         
         # remap identifiers
         original_chroms = BED_df.chrom.copy()

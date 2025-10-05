@@ -1,3 +1,7 @@
+import numpy as np
+import pandas as pd
+import logging
+
 def chunker(seq, size):
 # chunk data into n sizes
     return (seq[pos:pos + size] for pos in range(0, len(seq), size))
@@ -197,3 +201,16 @@ def get_uorfs(input_df):
         'stop_bp_pos':'rel_stop_pos'}, inplace=True)
         
     return uorf_df
+
+
+def import_reference(path):
+    # convert FASTA entry to sequence
+    sequence = []
+    with open(path) as f:
+        lines = f.readlines()
+        for line in lines:
+            if (">" in line) or ("#" in line):
+                pass
+            else:
+                sequence.append(line.strip(" \n"))
+    return "".join(sequence)
