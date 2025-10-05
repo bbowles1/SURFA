@@ -3,6 +3,8 @@
 .pdf
 .db
 .sql
+justfile
+*.egg-info*
 
 # python
 __pycache__
