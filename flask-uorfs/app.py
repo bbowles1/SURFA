@@ -1,5 +1,5 @@
 from flask import Flask, url_for, render_template
-from flask import jsonify, send_from_directory, send_file # extra things to try and use for POST
+from flask import jsonify, send_from_directory # extra things to try and use for POST
 import json
 
 app = Flask(__name__)
