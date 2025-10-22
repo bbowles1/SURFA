@@ -1,5 +1,6 @@
 import logging
 import pandas as pd
+import numpy as np
 import os
 import subprocess
 
@@ -154,7 +155,7 @@ def get_seq(BED_df, FASTA_path, working_dir, seqid_dict=None):
     FASTA_list.loc[:, "index"] = FASTA_list["index"].astype(str)
     
     # merge FASTA into original BED df
-    logger.info("Merging retrieve FASTA sequence with input dataframe.")
+    logger.info("Merging retrieved FASTA sequence with input dataframe.")
     BED_df = BED_df.merge(FASTA_list, on='index', how='outer')
 
     # remove tmp file
@@ -186,6 +187,11 @@ def make_bed(ensg_df):
 def gtf_to_sequence(input_df, FASTA_path, output_dir, seqid_path, seqid_key, seqid_value):
     
     logger = logging.getLogger(__name__)
+    
+    if input_df.empty:
+        logger.error("Could not retrieve FASTA sequence. Dataframe used for gtf_to_sequence call is empty!")
+        raise Exception("Dataframe used for gtf_to_sequence call is empty!")
+    
     logger.info("Retrieving FASTA sequence for GTF input.")
     
     # import BED file
@@ -202,11 +208,7 @@ def gtf_to_sequence(input_df, FASTA_path, output_dir, seqid_path, seqid_key, seq
         logger.info("Remapping contig identifiers in the input BED file using seqid key/values.")
         seqid_dict = produce_seqid_dict(seqid_map, seqid_key, seqid_value)
         BED_df = get_seq(BED_df, FASTA_path, output_dir, seqid_dict = seqid_dict)
-        
-        if BED_df.FASTA.isna().all():
-            logger.error("No sequences were retrieved from the FASTA input! Is your GTF correctly formatted?")
-            raise Exception("No sequences were retrieved from the FASTA input! Is your GTF correctly formatted?")
-    
+
     else:
     
         # map FASTA return to input BED df
@@ -216,9 +218,73 @@ def gtf_to_sequence(input_df, FASTA_path, output_dir, seqid_path, seqid_key, seq
     logger.info("Joining FASTA sequence back to input GTF.")
     BED_df.loc[:, "index"] = BED_df["index"].astype(int)
     BED_df = BED_df.set_index("index").FASTA
+    
+    # log the percentage of empty FASTA sequences
+    percent_empty = round((BED_df.isna().sum() / len(BED_df) * 100),2)
+    logger.debug(f"{BED_df.isna().sum()} / {len(BED_df)} ({percent_empty}%) BED entries returned an empty FASTA.")
+    
+    # check for empty FASTA
+    if BED_df.isna().all():
+        
+        logger.error("No sequences were retrieved from the FASTA input! Is your GTF correctly formatted?")
+        generate_bed_failure_report(input_df.seqname, FASTA_path, seqid_dict)
+        
+        raise Exception("No sequences were retrieved from the FASTA input! Is your GTF correctly formatted?")
+
+    
+    # create return df
     output_df = input_df.merge(BED_df, left_index=True, right_index=True)
         
     return output_df
 
-__all__ = ['complement_function', 'get_transcript_FASTA', 'produce_seqid_dict', 'fasta_from_stdout','get_seq',
-           'make_bed', 'gtf_to_sequence']
+
+def generate_bed_failure_report(chrom_array, FASTA_path, seqid_dict):
+    
+    logger = logging.getLogger(__name__)
+    logger.error("Generating debugging report for FASTA chromosomes.")
+    
+    # write chrom_array
+    print_chroms = ", ".join( [str(i) for i in np.unique(chrom_array.astype(str))] )
+    logger.error(f"Identified the following chromosome names in the input GTF: {print_chroms}.")
+    
+    # get contigs from FASTA file
+    fasta_contigs = parse_contigs_from_fasta(FASTA_path)
+    print_contigs = ", ".join( [str(i) for i in fasta_contigs] )
+    logger.error(f"Identified the following chromosome names in file {FASTA_path}: {print_contigs}.")
+    
+    # get keys
+    if seqid_dict:
+        
+        print_keys = ", ".join([str(i) for i in seqid_dict.keys() ])
+        logger.error(f"The following keys were used to remap the keys in the input GTF file: {print_keys}.")
+        
+        # get values
+        print_values = ", ".join([str(i) for i in seqid_dict.values() ])
+        logger.error(f"This database build attempted to map the GTF keys to the following values: {print_values}.")
+
+
+def get_contigs(FASTA_path):
+    """Returns a generator - processes one line at a time"""
+    with open(FASTA_path, 'r') as f:
+        for line in f:
+            if line.startswith('>'):
+                yield line.rstrip('\n')
+
+
+def parse_contigs_from_fasta(FASTA_path):
+        
+    # Usage:
+    contigs = []
+    for contig in get_contigs(FASTA_path):
+        contigs.append(contig)
+        
+    fasta_contigs = [i.split(" ")[0].strip(">") for i in contigs]
+    
+    return fasta_contigs
+    
+
+
+
+
+
+

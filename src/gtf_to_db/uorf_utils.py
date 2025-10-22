@@ -4,6 +4,7 @@ import numpy as np
 import os
 import math
 import sqlite3
+import re
 from gtf_to_db.fasta_utils import gtf_to_sequence, get_transcript_FASTA
 
 def chunker(seq, size):
@@ -220,6 +221,91 @@ def import_reference(path):
     return "".join(sequence)
 
 
+
+def get_exon_field_num(string):
+    
+    # find index of exon number
+    pattern = r"exon_number"    
+    index = next((i for i, item in enumerate(string.split(';')) if re.search(pattern, item)), None)
+    if index:
+        return index
+    else:
+        logging.error(f"No index field detected for {pattern}!")
+        raise Exception(f"No index field detected for {pattern}!")
+
+def get_transcript_field_num(string):
+    
+    # find index of exon number
+    pattern = r"transcript_id"    
+    index = next((i for i, item in enumerate(string.split(';')) if re.search(pattern, item)), None)
+    if index:
+        return index
+    else:
+        logging.error(f"No index field detected for {pattern}!")
+        raise Exception(f"No index field detected for {pattern}!")
+
+
+def get_transcript_version_field_num(string):
+    
+    # find index of exon number
+    pattern = r"transcript_version"    
+    index = next((i for i, item in enumerate(string.split(';')) if re.search(pattern, item)), None)
+    if index:
+        return index
+    else:
+        logging.error(f"No index field detected for {pattern}!")
+        raise Exception(f"No index field detected for {pattern}!")
+
+
+def check_identity(region_start, strand, CDS_start):
+    if strand == '+':
+        if region_start > CDS_start:
+            return(3)
+        elif region_start < CDS_start:
+            return(5)
+    if strand == '-':
+        if region_start > CDS_start:
+            return(5)
+        elif region_start < CDS_start:
+            return(3)
+
+
+def unpack_transcript(input_df, df_name):
+    
+    logger = logging.getLogger(__name__)
+    logger.debug("Checking input dataframe for separate transcript and version definitions.")
+    
+    return_df = input_df.copy()
+    
+    # get sample attributes field
+    sample_string = input_df.attribute.iloc[0]
+    logger.debug(f"Sample string in input {df_name} GTF attributes field: {sample_string}")
+    
+    # unpack transcript
+    transcript_index = get_transcript_field_num(sample_string)
+    logger.debug(f"Transcript detected in field {transcript_index}.")
+    return_df['transcript'] = return_df.attribute.str.split(';').str[transcript_index].str.split(' ').str[2].str.strip('"')
+
+    # determine if separate handling is required to append ENST + version number
+    separate_transcript_version = ("transcript_version" in input_df.attribute.iloc[0])
+    logger.debug(f"Separate transcript version handling: {separate_transcript_version}.")
+    
+    if separate_transcript_version:
+                
+        version_index = get_transcript_version_field_num(sample_string)
+        logger.debug(f"Transcript version number detected in field {version_index}.")
+        return_df['transcript_version'] = return_df.attribute.str.split(';').str[version_index].str.split(' ').str[2].str.strip('"')
+        
+        logger.debug("Appending transcript number and transcript version.")
+        return_df.loc[:, 'transcript'] = return_df.transcript + "." + return_df.transcript_version
+
+    else:
+        logger.debug("Transcript version is present in transcript definition. No appending required.")
+    
+    return return_df
+        
+
+
 def gtf_to_uorf_db(gtf_path,
                    FASTA_path,
                    output_dir,
@@ -230,13 +316,6 @@ def gtf_to_uorf_db(gtf_path,
     
     # setup logging
     logger = logging.getLogger(__name__)
-    logging.basicConfig(
-        format='%(asctime)s - %(name)s - %(funcName)s - %(levelname)s - %(message)s',
-        level=logging.INFO,
-        handlers=[
-            logging.FileHandler('gtf_to_json.log'),
-            logging.StreamHandler()
-        ])
     logger.info('Beginning database build.')
 
     
@@ -245,18 +324,22 @@ def gtf_to_uorf_db(gtf_path,
         if not os.path.exists(path):
             logger.error(f"Input path {path} does not exist!")
             raise Exception(f"Path {path} does not exist!")
+    logger.debug('All input paths exist.')
 
     ###############
     # DATA IMPORT #
     ###############
 
     # Annotate gene_start: the start of coding at the canonical transcript ATG. This is the CDS start position in the Ensembl .gff3.
+    logger.debug(f"Importing input GTF {gtf_path}.")
     ensg_df = pd.read_csv(gtf_path, 
                         header=None, 
                         sep='\t', comment='#', names=['seqname', 'source', 'feature', 
                                                         'start', 'end', 'score', 'strand', 'frame', 'attribute'])
+    logger.debug(f"Input GTF imported. Dataframe has columns {ensg_df.columns}.")
 
     # subset to source
+    logger.debug(f"Possible sources for input GTF: {ensg_df.source.unique()}.")
     ensg_df = ensg_df.loc[ensg_df.source==source]
     logger.info(f'Subsetting to dataframe source {source}.')
 
@@ -267,8 +350,16 @@ def gtf_to_uorf_db(gtf_path,
 
     # get length of first CDS bound
     cds = ensg_df.loc[ensg_df.feature=="CDS"].copy()
-    cds["transcript"] = cds.attribute.str.split(";").str[1].str.split(' ').str[2].str.strip('"')
-    cds["exon"] = cds.attribute.str.split(';').str[6].str.split(' ').str[2].astype(int)
+    
+    # unpack transcript
+    cds = unpack_transcript(cds, "CDS")
+    
+    # determine indices
+    sample_string = cds.attribute.iloc[0]
+    exon_index = get_exon_field_num(sample_string)
+    
+    # unpack fields
+    cds["exon"] = cds.attribute.str.split(';').str[exon_index].str.split(' ').str[2].str.strip('"').astype(int)
     cds["length"] = cds.end+1 - cds.start
     cds.sort_values(by=["transcript","exon"], ascending=True, inplace=True)
 
@@ -282,29 +373,58 @@ def gtf_to_uorf_db(gtf_path,
     # GENE FEATURES #
     #################
 
-
-    # Create exons table
     exons = ensg_df.loc[ensg_df.feature=='exon'].copy()
+    
+    # unpack transcripts
+    exons = unpack_transcript(exons, "exons")
+
+    # determine indices
+    sample_string = exons.attribute.iloc[0]
+    exon_index = get_exon_field_num(sample_string)
+
+    # create exons table
     exons['length'] = exons.end+1 - exons.start
-    exons['exon'] = exons.attribute.str.split(';').str[6].str.split(' ').str[2]
-    exons['transcript'] = exons.attribute.str.split(';').str[1].str.split(' ').str[2].str.strip('"')
+    exons['exon'] = exons.attribute.str.split(';').str[exon_index].str.split(' ').str[2]
     exons['rel_end'] = exons.groupby('transcript')['length'].cumsum()
     exons['rel_start'] = exons['rel_end'] - exons['length']
-
-        
 
     ###################
     # 5' UTR FEATURES #
     ###################
     # Annotate features including transcript, exon, CDS start site, strand
     # collect 5'UTR regions specifically
+    
+    new_utr_format = ("five_prime_utr" in ensg_df.feature.values)
+    
+    if new_utr_format:
+        # ensembl dataframe is newer format which delimits 5'UTR
+        utr_df = ensg_df.loc[ensg_df.feature=='five_prime_utr'].copy()
+        
+        # unpack transcripts
+        utr_df = unpack_transcript(utr_df, "UTR")
+        
+        # determine indices
+        sample_string = utr_df.attribute.iloc[0]
+        
+        # manually enumerate exon number
+        utr_df.loc[utr_df.strand == "+", "exon"] = utr_df.loc[
+            utr_df.strand == "+"].sort_values(by="start", ascending=True).groupby("transcript").cumcount()+1
+        utr_df.loc[utr_df.strand == "-", "exon"] = utr_df.loc[
+            utr_df.strand == "-"].sort_values(by="start", ascending=False).groupby("transcript").cumcount()+1
+    
+    else:
+        # subset to UTRs
+        utr_df = ensg_df.loc[ensg_df.feature=='UTR'].copy()
+        
+        # unpack transcripts
+        utr_df = unpack_transcript(utr_df, "UTR")
+        
+        # determine indices
+        sample_string = utr_df.attribute.iloc[0]
+        exon_index = get_exon_field_num(sample_string)
+            
+        utr_df['exon'] = utr_df.attribute.str.split(';').str[exon_index].str.split(' ').str[2]
 
-    # subset to UTRs
-    utr_df = ensg_df.loc[ensg_df.feature=='UTR'].copy()
-
-    # unpack transcript and exon #
-    utr_df['transcript'] = utr_df.attribute.str.split(';').str[1].str.split(' ').str[2].str.strip('"')
-    utr_df['exon'] = utr_df.attribute.str.split(';').str[6].str.split(' ').str[2]
     utr_df.sort_values(by=["transcript","exon"], ascending=True, inplace=True)
 
     # merge in CDS start
@@ -313,25 +433,16 @@ def gtf_to_uorf_db(gtf_path,
                        on=['transcript'], how='left')
     
     # drop rows where CDS start could not be mapped
-    no_cds_rows = utr_df.loc[utr_df.cds_start.notna()].shape[0]
+    no_cds_rows = utr_df.loc[utr_df.cds_start.isna()].shape[0]
     if no_cds_rows > 0:
         logger.warning(f"Removed {no_cds_rows} rows where CDS start is not defined in the input GTF.")
     utr_df = utr_df.loc[utr_df.cds_start.notna()]
 
+    
     # determine UTR status
-    def check_identity(region_start, strand, CDS_start):
-        if strand == '+':
-            if region_start > CDS_start:
-                return(3)
-            elif region_start < CDS_start:
-                return(5)
-        if strand == '-':
-            if region_start > CDS_start:
-                return(5)
-            elif region_start < CDS_start:
-                return(3)
-    utr_df['utr_type'] = utr_df.apply(lambda row: check_identity(row.start, row.strand, row.cds_start), axis=1)
-    utr_df = utr_df.loc[utr_df.utr_type==5]
+    if new_utr_format:
+        utr_df['utr_type'] = utr_df.apply(lambda row: check_identity(row.start, row.strand, row.cds_start), axis=1)
+        utr_df = utr_df.loc[utr_df.utr_type==5]
     
 
     #############
@@ -491,6 +602,3 @@ def gtf_to_uorf_db(gtf_path,
     logger.info(f"Database saved to {db_path}.")
     print(f"Database saved to {db_path}")
 
-
-__all__ = ['chunker','score_kozak','get_codons','fasta_codon_search','filter_codons','filter_codons','match_codons',
-           'return_FASTA', 'return_FASTA_optimized','get_uorfs','import_reference','gtf_to_uorf_db']
