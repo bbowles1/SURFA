@@ -563,6 +563,15 @@ def gtf_to_uorf_db(gtf_path,
     orfs_per_enst.columns = ['transcript','uorf_count']
     transcript_df = pd.merge(transcript_df, orfs_per_enst)
     
+    ###############
+    # NA HANDLING #
+    ###############
+
+    # set handling for end position, length
+    length_dict = transcript_df.set_index("transcript")["length"].to_dict()
+
+    uorf_table.loc[uorf_table.stop_codon == "NO_UTR_STOP", "end"] = uorf_table.loc[uorf_table.stop_codon == "NO_UTR_STOP"].transcript.map(length_dict)
+    uorf_table.loc[uorf_table.stop_codon == "NO_UTR_STOP", "length"] = uorf_table.loc[uorf_table.stop_codon == "NO_UTR_STOP"].transcript.map(length_dict)
 
 
     ##########
