@@ -391,9 +391,9 @@ def gtf_to_uorf_db(gtf_path,
     ###################
     # 5' UTR FEATURES #
     ###################
-    # Annotate features including transcript, exon, CDS start site, strand
-    # collect 5'UTR regions specifically
+    # Annotate 5'UTR features, define as all 5'UTR exons, excluding CDS sequences
     
+    # bool: determine if we have a new or old 5'UTR annotation format
     new_utr_format = ("five_prime_utr" in ensg_df.feature.values)
     
     if new_utr_format:
@@ -465,8 +465,6 @@ def gtf_to_uorf_db(gtf_path,
     # calculate relative start and stop of each UTR exon
     utr_df['rel_stop'] = utr_df.groupby("transcript").length.cumsum()
     utr_df['rel_start'] = utr_df['rel_stop'] - utr_df.length
-    
-
 
     #########
     # FASTA #
@@ -508,6 +506,15 @@ def gtf_to_uorf_db(gtf_path,
     transcript_df = pd.merge(transcript_df,
              utr_len.rename(columns={'length':'utr_len'}))
     
+    ##############
+    # CDS LENGTH #
+    ##############
+
+    # calculate rel start/stop annotations for CDS display
+    first_cds = pd.merge(first_cds, 
+             transcript_df[["transcript","utr_len"]].drop_duplicates())
+    first_cds.rename(columns={"utr_len":"rel_start"}, inplace=True)
+    first_cds["rel_stop"] = first_cds.rel_start + first_cds.length
 
     #############
     # TRANSFORM #
@@ -568,15 +575,19 @@ def gtf_to_uorf_db(gtf_path,
     
     # transcript table
     transcript_df
+    logger.debug(f"Saving transcript table with columns: {transcript_df.columns}.")
     
     # exon table
     exons.drop(columns=["attribute"], inplace=True)
+    logger.debug(f"Saving exons table with columns: {exons.columns}.")
     
     # uorf table
     uorf_table
+    logger.debug(f"Saving uORFs table with columns: {uorf_table.columns}.")
     
     # cds_df
     first_cds.drop(columns=["seqname","end"], inplace=True)
+    logger.debug(f"Saving CDS table with columns: {first_cds.columns}.")
     
     # rename columns in utr_df
     utr_df.rename(columns={"seqname":"chrom"}, inplace=True)
@@ -587,6 +598,8 @@ def gtf_to_uorf_db(gtf_path,
     # set explicit output cols for SQL db
     utr_cols = ["transcript","exon","length","rel_start", "rel_stop", "start", "end", "chrom" ,
                      "frame_state", "FASTA"]
+    utr_df = utr_df[utr_cols]
+    logger.debug(f"Saving UTR table with columns: {utr_df.columns}.")
 
     # create database
     logger.info("Writing output to SQL database.")
@@ -594,7 +607,7 @@ def gtf_to_uorf_db(gtf_path,
     db_path = os.path.join(output_dir, "uorfs.db")
     conn = sqlite3.connect(db_path)
     transcript_df.to_sql('transcripts', conn, if_exists='replace', index=False)
-    utr_df[utr_cols].to_sql('utr', conn, if_exists='replace', index=False)
+    utr_df.to_sql('utr', conn, if_exists='replace', index=False)
     uorf_table.to_sql('uorfs', conn, if_exists='replace', index=False)
     first_cds.to_sql('cds', conn, if_exists='replace', index=False)
     

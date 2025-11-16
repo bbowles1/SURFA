@@ -6,7 +6,7 @@ Created on Sun May 18 11:09:30 2025
 Generate a SQL database of uORF given an input Ensembl GTF file.
 
 Example usage:
-gtf_to_json.py --gtf "/Users/bbowles/Documents/Code/refdata/MANE/MANE.GRCh38.v1.4.ensembl_genomic.gtf.gz" \
+make_uorf_db.py --gtf "/Users/bbowles/Documents/Code/refdata/MANE/MANE.GRCh38.v1.4.ensembl_genomic.gtf.gz" \
     --fasta  '/Users/bbowles/Documents/Code/refdata/FASTA/GRCh37/release-113/Homo_sapiens.GRCh37.dna_sm.primary_assembly.fa' \
     --output-dir "/Users/bbowles/Documents/Code/tmp" \
     --ensembl-source "ensembl_havana" \
