@@ -99,11 +99,11 @@ def get_uorfs(input_df):
     # set start and stop codons
     stop_codons = {'UAA', 'UAG', 'UGA'}
     start_codons = {
-        'AUG',  # Canonical499
-        'CUG', 'UUG', 'GUG',  # Common non-canonical
-        'UGG', 'UCG',  # Less common non-canonical
-        'UUU', 'UUC', 'UUA'   # Rare non-canonical
+        'AUG', # Canonical
+        'CUG', # near-cognate 
+        'GUG', 'UUG', 'AUU', 'AUA', 'AUC', 'AAG', 'AGG', 'ACG'  # rare near-cognate
     }
+
     all_codons = stop_codons.union(start_codons)
     
     # split data into three frame states
@@ -570,9 +570,15 @@ def gtf_to_uorf_db(gtf_path,
     # set handling for end position, length
     length_dict = transcript_df.set_index("transcript")["length"].to_dict()
 
-    uorf_table.loc[uorf_table.stop_codon == "NO_UTR_STOP", "end"] = uorf_table.loc[uorf_table.stop_codon == "NO_UTR_STOP"].transcript.map(length_dict)
-    uorf_table.loc[uorf_table.stop_codon == "NO_UTR_STOP", "length"] = uorf_table.loc[uorf_table.stop_codon == "NO_UTR_STOP"].transcript.map(length_dict)
+    uorfs_with_unmapped_start = (uorf_table.stop_codon == "NO_UTR_STOP").sum()
+    logger.debug(f"{uorfs_with_unmapped_start} uORFs with non-UTR stop codons. Handling unmapped length, end anotations.")
 
+    uorf_table.loc[uorf_table.stop_codon == "NO_UTR_STOP", "rel_stop_pos"] = uorf_table.loc[
+        uorf_table.stop_codon == "NO_UTR_STOP"].transcript.map(length_dict)
+    uorf_table.loc[uorf_table.stop_codon == "NO_UTR_STOP", "uorf_length"] = uorf_table.loc[
+        uorf_table.stop_codon == "NO_UTR_STOP"].transcript.map(length_dict)
+    uorf_table.loc[:, "rel_stop_pos"] = uorf_table.rel_stop_pos.astype(int)
+    uorf_table.loc[:, "uorf_length"] = uorf_table.uorf_length.astype(int)
 
     ##########
     # SQLite #
