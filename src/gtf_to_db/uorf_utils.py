@@ -17,8 +17,16 @@ def score_kozak(codon):
     but is a place holder for more advanced functionality in the future.
     """
     
-    codon_dict = {'ATG':1, 'CTG':2, 'TTG':3, 'GTG':4, 'TGG':5, 
-                  'TCG':6, 'UTU':7, 'TTT':8, 'TTC':9}
+    codon_dict = {'AUG':0, 
+                  'CUG':1, 
+                  'GUG':2, 
+                  'UUG':3, 
+                  'ACG':4, 
+                  'AAG':5, 
+                  'AGG':6, 
+                  'AUC':7, 
+                  'AUU':8, 
+                  'AUA':9}
     
     return 1
 
@@ -101,7 +109,7 @@ def get_uorfs(input_df):
     start_codons = {
         'AUG', # Canonical
         'CUG', # near-cognate 
-        'GUG', 'UUG', 'AUU', 'AUA', 'AUC', 'AAG', 'AGG', 'ACG'  # rare near-cognate
+        'GUG', 'UUG', 'ACG', 'AAG', 'AGG', 'AUC', 'AUU', 'AUA'  # rare near-cognate
     }
 
     all_codons = stop_codons.union(start_codons)
