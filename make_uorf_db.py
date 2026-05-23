@@ -6,7 +6,7 @@ Created on Sun May 18 11:09:30 2025
 Generate a SQL database of uORF given an input Ensembl GTF file.
 
 Example usage:
-gtf_to_json.py --gtf "/Users/bbowles/Documents/Code/refdata/MANE/MANE.GRCh38.v1.4.ensembl_genomic.gtf.gz" \
+make_uorf_db.py --gtf "/Users/bbowles/Documents/Code/refdata/MANE/MANE.GRCh38.v1.4.ensembl_genomic.gtf.gz" \
     --fasta  '/Users/bbowles/Documents/Code/refdata/FASTA/GRCh37/release-113/Homo_sapiens.GRCh37.dna_sm.primary_assembly.fa' \
     --output-dir "/Users/bbowles/Documents/Code/tmp" \
     --ensembl-source "ensembl_havana" \
@@ -18,6 +18,7 @@ gtf_to_json.py --gtf "/Users/bbowles/Documents/Code/refdata/MANE/MANE.GRCh38.v1.
 """
 
 import argparse
+import logging
 
 # custom imports
 from gtf_to_db.uorf_utils import gtf_to_uorf_db
@@ -44,6 +45,9 @@ if __name__ == "__main__":
     parser.add_argument('--seqid-value', nargs='?', 
                         help='Column from seqid_map containing output values to remap GTF chrom identifiers to.', 
                         default=None)
+    parser.add_argument('--log-level', default='INFO', 
+                    choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'],
+                    help='Set the logging level.')
 
     # Parse arguments
     args = parser.parse_args()
@@ -55,9 +59,29 @@ if __name__ == "__main__":
     seqid_key = args.seqid_key
     seqid_value = args.seqid_value
 
+    # setup logging
+    logger = logging.getLogger(__name__)
+    logging.basicConfig(
+        format='%(asctime)s - %(name)s - %(funcName)s - %(levelname)s - %(message)s',
+        level=logging.getLevelName(args.log_level),
+        handlers=[
+            logging.FileHandler('gtf_to_json.log'),
+            logging.StreamHandler()
+        ])
+
+    # raise exception if user did not provide ALL seqid mapping inputs
+    all_inputs = all([bool(i) for i in [seqid_path, seqid_key, seqid_value] ])
+    none_inputs = not any([bool(i) for i in [seqid_path, seqid_key, seqid_value] ])
+    if not (all_inputs or none_inputs):
+        raise Exception("""You have provided SOME of the inputs for chromosome remapping, 
+                        but you must provide ALL arguments [--seq-id-map, --seqid-key, --seq-id-value] to remap. 
+                        If your contigs match between the GTF and FASTA files, you should leave all three
+                        input arguments blank. Please see documentation for more details.""")
+
+
     # set params for testing
     if False:
-        gtf_path = "/Users/bbowles/Documents/Code/refdata/MANE/MANE.GRCh38.v1.4.ensembl_genomic.gtf.gz"
+        gtf_path = "/Users/bbowles/Documents/Code/refdata/ensembl/Homo_sapiens.GRCh38.115.gtf.gz"
         FASTA_path = '/Users/bbowles/Documents/Code/refdata/FASTA/GRCh38/Homo_sapiens.GRCh38.dna.primary_assembly.fa'
         output_dir = "/Users/bbowles/Documents/Code/tmp"
         source = "ensembl_havana"

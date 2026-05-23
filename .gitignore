@@ -5,6 +5,7 @@
 .sql
 justfile
 *.egg-info*
+wrangler
 
 # python
 __pycache__
