@@ -3,8 +3,16 @@ import numpy as np
 import sqlite3
 import pandas as pd
 
-__all__ = ["NpEncoder", "export_uorfs", "query_uorf_db", "format_utr", "format_cds",
-           "format_uorfs", "assemble_json_from_transcript"]
+__all__ = [
+    "NpEncoder",
+    "export_uorfs",
+    "query_uorf_db",
+    "format_utr",
+    "format_cds",
+    "format_uorfs",
+    "assemble_json_from_transcript",
+]
+
 
 class NpEncoder(json.JSONEncoder):
     # encoder used to write json

@@ -4,9 +4,19 @@ import numpy as np
 import os
 import subprocess
 
-__all__ = ["complement_function", "get_transcript_FASTA", "produce_seqid_dict",
-           "fasta_from_stdout", "get_seq", "make_bed", "gtf_to_sequence",
-           "generate_bed_failure_report", "get_contigs", "parse_contigs_from_fasta"]
+__all__ = [
+    "complement_function",
+    "get_transcript_FASTA",
+    "produce_seqid_dict",
+    "fasta_from_stdout",
+    "get_seq",
+    "make_bed",
+    "gtf_to_sequence",
+    "generate_bed_failure_report",
+    "get_contigs",
+    "parse_contigs_from_fasta",
+]
+
 
 def complement_function(input_FASTA: str) -> str:
     """This function translates negative strand nucleotides into their complements,
