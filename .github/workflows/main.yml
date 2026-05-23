@@ -3,15 +3,8 @@ name: Build Docker Image and Run Tests
 on:
   push:
     branches: [ main, develop ]
-    paths:
-      - 'dockers/**'
-      - '.github/workflows/main.yml'
   pull_request:
     branches: [ main ]
-    paths:
-      - 'docker/**'
-      - 'src/*'
-      - 'tests/*'
   workflow_dispatch:
 
 jobs:
