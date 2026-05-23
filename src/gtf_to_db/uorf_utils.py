@@ -7,6 +7,11 @@ import sqlite3
 import re
 from gtf_to_db.fasta_utils import gtf_to_sequence, get_transcript_FASTA
 
+__all__ = ["chunker", "score_kozak", "get_codons", "fasta_codon_search",
+           "filter_codons", "match_codons", "return_FASTA", "return_FASTA_optimized",
+           "get_uorfs", "import_reference", "get_exon_field_num", 
+           "get_transcript_field_num", "get_transcript_version_field_num",
+           "check_identity", "unpack_transcript", "gtf_to_uorf_db"]
 
 def chunker(seq, size):
     # chunk data into n sizes
