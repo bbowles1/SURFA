@@ -55,26 +55,63 @@ def score_kozak(codon):
 
 
 def get_codons(seq, frame):
+    """Split nucleotide sequence into codon blocks for a given frame
+
+    :param seq: Nucleotide sequence to split
+    :type seq: str
+    :param frame: Frame (0,1,2) to split on.
+    :type frame: int
+    :return: List of split codons
+    :rtype: list
+    """    
+
     # split sequence into codons for a given frame
     rna_seq = seq[frame:]
     return [rna_seq[i : i + 3] for i in range(0, len(rna_seq) - 2, 3)]
 
 
 def fasta_codon_search(RNA, frame):
+    """Split nucleotide sequence into codon blocks for a given frame.
+    Faster version of get_codons.
+
+    :param RNA: RNA nucleotide sequence
+    :type RNA: str
+    :param frame: Frame (0,1,2) to split on.
+    :type frame: int
+    :return: list of RNA nucleotides, split by frame.
+    :rtype: list
+    """    
+
     # Begin RNA reading frame at Nth position, then iterate over in chunks of 3
     return list(map("".join, zip(*[iter(RNA[frame:])] * 3)))
 
 
 def filter_codons(codons, targets):
+    """Filter codons to a target list.
+
+    :param codons: List of nucleotide codons.
+    :type codons: list
+    :param targets: List of target codons (ie AUG, CUG).
+    :type targets: list
+    :return: Filtered set of codons.
+    :rtype: list
+    """    
+
     target_set = set(targets)  # O(1) lookups
     return [(codon, idx) for idx, codon in enumerate(codons) if codon in target_set]
 
 
 def match_codons(start_codons, stop_codons):
-    """
-    Find next downstream stop codon for each start codon using numpy
-    Returns: list of tuples (start_codon_info, stop_codon_info or None)
-    """
+    """Find next downstream stop codon for each start codon using numpy.
+
+    :param start_codons: List of tuples with format (start_codon, position)
+    :type start_codons: List
+    :param stop_codons: List of tuples with format (stop_codon, position)
+    :type stop_codons: list
+    :return: List of codons pairs
+    :rtype: list
+    """    
+
     if not stop_codons:
         return [(start, None) for start in start_codons]
     if not start_codons:
