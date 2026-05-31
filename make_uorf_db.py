@@ -19,6 +19,7 @@ make_uorf_db.py --gtf "/Users/bbowles/Documents/Code/refdata/MANE/MANE.GRCh38.v1
 
 import argparse
 import logging
+import os
 
 # custom imports
 from gtf_to_db.uorf_utils import gtf_to_uorf_db
@@ -65,7 +66,7 @@ if __name__ == "__main__":
         format='%(asctime)s - %(name)s - %(funcName)s - %(levelname)s - %(message)s',
         level=logging.getLevelName(args.log_level),
         handlers=[
-            logging.FileHandler('gtf_to_json.log'),
+            logging.FileHandler( os.path.join(output_dir, 'gtf_to_json.log') ),
             logging.StreamHandler()
         ])
 
