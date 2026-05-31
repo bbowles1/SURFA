@@ -136,6 +136,16 @@ def match_codons(start_codons, stop_codons):
 
 
 def return_FASTA(FASTA, codon_tuple):
+    """Subset an input FASTA sequence to the supplied codon boundaries.
+
+    :param FASTA: FASTA sequence of the UTR
+    :type FASTA: str
+    :param codon_tuple: tuple with format ((start_codon, position), (stop_codon, position))
+    :type codon_tuple: tuple
+    :return: uORF FASTA sequence
+    :rtype: str
+    """    
+
     # check if stop is None
     if codon_tuple[1] is None:
         return FASTA[codon_tuple[0][1] :]
@@ -144,6 +154,16 @@ def return_FASTA(FASTA, codon_tuple):
 
 
 def return_FASTA_optimized(FASTA, codon_tuple):
+    """Optimized approach to return FASTA sequence from start and stop tuples
+
+    :param FASTA: FASTA sequence of the UTR
+    :type FASTA: str
+    :param codon_tuple: tuple with format ((start_codon, position), (stop_codon, position))
+    :type codon_tuple: tuple
+    :return: uORF FASTA sequence
+    :rtype: str
+    """    
+
     start = codon_tuple[0][1]
     end = codon_tuple[1]
 
@@ -309,6 +329,14 @@ def get_uorfs(input_df):
 
 
 def import_reference(path):
+    """Parse a reference FASTA file. Intended to import test data.
+
+    :param path: Path to reference FASTA sequence.
+    :type path: str
+    :return: A concatenated FASTA sequence.
+    :rtype: str
+    """    
+
     # convert FASTA entry to sequence
     sequence = []
     with open(path) as f:
@@ -322,6 +350,15 @@ def import_reference(path):
 
 
 def get_exon_field_num(string):
+    """Find the index of the exon number in a GTF file's attribute column.
+
+    :param string: attribute string from a GTF file.
+    :type string: str
+    :raises Exception: Could not detect the index for the given string.
+    :return: index of "exon_number" field.
+    :rtype: int
+    """    
+
     # find index of exon number
     pattern = r"exon_number"
     index = next(
@@ -336,6 +373,15 @@ def get_exon_field_num(string):
 
 
 def get_transcript_field_num(string):
+    """Find the index of the transcript ID in a GTF file's attribute column.
+
+    :param string: attribute string from a GTF file.
+    :type string: str
+    :raises Exception: Could not detect the index for the given string.
+    :return: index of "transcript_id" field.
+    :rtype: int
+    """    
+    
     # find index of exon number
     pattern = r"transcript_id"
     index = next(
@@ -350,6 +396,15 @@ def get_transcript_field_num(string):
 
 
 def get_transcript_version_field_num(string):
+    """Find the index of the transcript version in a GTF file's attribute column.
+
+    :param string: attribute string from a GTF file.
+    :type string: str
+    :raises Exception: Could not detect the index for the given string.
+    :return: index of "transcript_version" field.
+    :rtype: int
+    """    
+    
     # find index of exon number
     pattern = r"transcript_version"
     index = next(
@@ -364,6 +419,18 @@ def get_transcript_version_field_num(string):
 
 
 def check_identity(region_start, strand, CDS_start):
+    """Check whether an input GTF UTR region is 5' or 3'
+
+    :param region_start: UTR region start position
+    :type region_start: int
+    :param strand: Strand (+ or -)
+    :type strand: str
+    :param CDS_start: Coding DNA sequence start position
+    :type CDS_start: int
+    :return: 5 or 3
+    :rtype: int
+    """
+
     if strand == "+":
         if region_start > CDS_start:
             return 3
@@ -377,6 +444,17 @@ def check_identity(region_start, strand, CDS_start):
 
 
 def unpack_transcript(input_df, df_name):
+    """Unpack the transcript from the attribute column to a separate field.
+    Includes handling for a variety of GTF formats.
+
+    :param input_df: Pandas Dataframe.
+    :type input_df: pd.DataFrame
+    :param df_name: Name of dataframe for logging.
+    :type df_name: str
+    :return: Dataframe with transcript identity unpacked to specific column.
+    :rtype: pd.DataDrame
+    """
+
     logger = logging.getLogger(__name__)
     logger.debug(
         "Checking input dataframe for separate transcript and version definitions."
@@ -440,6 +518,26 @@ def gtf_to_uorf_db(
     seqid_key=None,
     seqid_value=None,
 ):
+    """Identify uORF sequences from an input GTF file, provide basic annotations,
+    and supply a sqlite database of information.
+
+    :param gtf_path: Path to Ensembl GTF file.
+    :type gtf_path: str
+    :param FASTA_path: Path to FASTA sequence.
+    :type FASTA_path: str
+    :param output_dir: Path to output directory for files and logs.
+    :type output_dir: str
+    :param source: Source to use within Ensembl GTF (ie Havanna)
+    :type source: str
+    :param seqid_path: Path to seqid dictionary which maps contigs in the FASTA to their identity in the GTF, defaults to None
+    :type seqid_path: str, optional
+    :param seqid_key: Key to use for mapping between contigs and GTF seqids, should match those in seqid_path file, defaults to None
+    :type seqid_key: str, optional
+    :param seqid_value: Value to use for mapping between contigs and GTF seqids, should match those in seqid_path file, defaults to None
+    :type seqid_value: str, optional
+    :raises Exception: Exception if an input path does not exist.
+    """    
+
     # setup logging
     logger = logging.getLogger(__name__)
     logger.info("Beginning database build.")
