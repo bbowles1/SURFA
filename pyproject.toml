@@ -20,4 +20,5 @@ where = ["src"]
 [dependency-groups]
 dev = [
     "ruff>=0.13.3",
+    "zensical>=0.0.44",
 ]
