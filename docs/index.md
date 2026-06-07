@@ -1,10 +1,47 @@
 ---
-icon: lucide/rocket
+icon: lucide/flask-conical
 ---
 
-# Get started
+# SURF-A
 
-For full documentation visit [zensical.org](https://zensical.org/docs/).
+SURF-A is a Python utility that allows users to annotate small upstream open reading frames (uORFs) in mRNA sequences. The tool provides a way to build a basic database of uORF sequences from any input set of Ensembl GTF and FASTA files.
+
+## Installation
+
+This work is in development and full PyPI hosting is coming soon. This package depends on a locally available version of Bedtools.
+
+For development, you can install this tool locally using the following steps:
+
+1. Install uv: (https://docs.astral.sh/uv/).
+2. `uv sync` to install all required dependencies.
+3. `source .venv/bin/activate` to activate the environment.
+
+
+## Usage
+
+The required inputs for the SURF-A database build are:
+
+- An Ensembl GTF file for your organism of choice.
+- A matching FASTA file (should use the same reference genome as the GTF).
+- A target directory to save files.
+
+Basic database build:
+
+```
+make_uorf_db.py \
+  --gtf "Homo_sapiens.GRCh38.115.gtf.gz" \
+  --fasta  'Homo_sapiens.GRCh38.dna.primary_assembly.fa' \
+  --output-dir "/Users/bbowles/Documents/Code/tmp"
+```
+
+Export a JSON file for your target transcript:
+
+```
+make_json.py \
+    --db uorfs.db \
+    --transcript ENST00000504921.7 \
+    --output uorfs.json
+```
 
 ## Commands
 
