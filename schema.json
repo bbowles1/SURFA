@@ -60,7 +60,7 @@
           "type": "TEXT",
           "nullable": false,
           "description": "Number of uORFs identified in the 5'UTR."
-        }        
+        }
       ]
     },
     {
@@ -130,28 +130,39 @@
           "primary_key": false,
           "description": "The reading frame of the uORF: 0, 1, or 2 to indicate the index of the 5'UTR FASTA sequence where the reading frame begins."
         },
-
-
-
         {
-          "name": "uorf_id",
-          "type": "INTEGER",
-          "nullable": false,
-          "primary_key": true,
-          "description": "Auto-incrementing surrogate key."
-        },
-        {
-          "name": "transcript_id",
+          "name": "uorf_location",
           "type": "TEXT",
           "nullable": false,
-          "description": "Foreign key to transcripts.transcript_id."
-        }
-      ],
-      "foreign_keys": [
+          "primary_key": false,
+          "description": "Whether the uORF is contained entirely within the 5'UTR or overlaps the CDS."
+        },
         {
-          "column": "transcript_id",
-          "references_table": "transcripts",
-          "references_column": "transcript_id"
+          "name": "CDS_frame_status",
+          "type": "TEXT",
+          "nullable": false,
+          "primary_key": false,
+          "description": "Whether the uORF is in the same reading frame as the transcript's CDS start codon."
+        },
+        {
+          "name": "uorf_id",
+          "type": "TEXT",
+          "nullable": false,
+          "primary_key": true,
+          "description": "Unique ID of the uORF."
+        }
+      ]
+    },
+    {
+      "name": "uorfs",
+      "description": "Upstream open reading frames identified within each 5' UTR.",
+      "columns": [
+        {
+          "name": "transcript",
+          "type": "TEXT",
+          "nullable": false,
+          "primary_key": false,
+          "description": "Transcript ID, including version number, eg ENST00000405005.8."
         }
       ]
     }
