@@ -154,15 +154,126 @@
       ]
     },
     {
-      "name": "uorfs",
-      "description": "Upstream open reading frames identified within each 5' UTR.",
+      "name": "cds",
+      "description": "Information on the initial coding sequence, if present, in 5'UTR exons.",
       "columns": [
         {
           "name": "transcript",
           "type": "TEXT",
           "nullable": false,
-          "primary_key": false,
+          "primary_key": true,
           "description": "Transcript ID, including version number, eg ENST00000405005.8."
+        },
+        {
+          "name": "exon",
+          "type": "TEXT",
+          "nullable": false,
+          "primary_key": false,
+          "description": "Transcript number which contains the CDS start codon and sequence."
+        },
+        {
+          "name": "length",
+          "type": "TEXT",
+          "nullable": false,
+          "primary_key": false,
+          "description": "Number of nucleotides in the CDS."
+        },
+        {
+          "name": "start",
+          "type": "TEXT",
+          "nullable": false,
+          "primary_key": false,
+          "description": "Index of the CDS start site within the exon FASTA sequence."
+        },
+        {
+          "name": "rel_start",
+          "type": "TEXT",
+          "nullable": false,
+          "primary_key": false,
+          "description": "Index of the CDS start site within the exon FASTA sequence."
+        },
+        {
+          "name": "rel_stop",
+          "type": "TEXT",
+          "nullable": false,
+          "primary_key": false,
+          "description": "End of the 5'UTR exon sequence."
+        }
+      ]
+    },
+    {
+      "name": "utr",
+      "description": "Information on the parent 5'UTR UTR sequences used to annotate uORFs.",
+      "columns": [
+        {
+          "name": "transcript",
+          "type": "TEXT",
+          "nullable": false,
+          "primary_key": true,
+          "description": "Transcript ID, including version number, eg ENST00000405005.8."
+        },
+        {
+          "name": "exon",
+          "type": "TEXT",
+          "nullable": false,
+          "primary_key": false,
+          "description": "Exon number of 5'UTR sequence."
+        },
+        {
+          "name": "length",
+          "type": "TEXT",
+          "nullable": false,
+          "primary_key": false,
+          "description": "Length of the 5'UTR sequence."
+        },
+        {
+          "name": "rel_start",
+          "type": "TEXT",
+          "nullable": false,
+          "primary_key": false,
+          "description": "Index position within the 5'UTR FASTA sequence where this particular exon begins."
+        },
+        {
+          "name": "rel_stop",
+          "type": "TEXT",
+          "nullable": false,
+          "primary_key": false,
+          "description": "Index position within the 5'UTR FASTA sequence where this particular exon ends."
+        },
+        {
+          "name": "start",
+          "type": "TEXT",
+          "nullable": false,
+          "primary_key": false,
+          "description": "???"
+        },
+        {
+          "name": "end",
+          "type": "TEXT",
+          "nullable": false,
+          "primary_key": false,
+          "description": "???"
+        },
+        {
+          "name": "chrom",
+          "type": "TEXT",
+          "nullable": false,
+          "primary_key": false,
+          "description": "Chromosome name, e.g. chr1."
+        },
+        {
+          "name": "frame_state",
+          "type": "TEXT",
+          "nullable": false,
+          "primary_key": false,
+          "description": "Index position of the CDS start (0, 1, or 2). Used to determine whether uORFs are in-frame or out of frame with the CDS start."
+        },
+        {
+          "name": "FASTA",
+          "type": "TEXT",
+          "nullable": false,
+          "primary_key": false,
+          "description": "DNA FASTA sequence of the 5'UTR."
         }
       ]
     }
