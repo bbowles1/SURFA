@@ -1,6 +1,6 @@
----
-icon: lucide/flask-conical
----
+______________________________________________________________________
+
+## icon: lucide/flask-conical
 
 # SURF-A
 
@@ -13,9 +13,8 @@ This work is in development and full PyPI hosting is coming soon. This package d
 For development, you can install this tool locally using the following steps:
 
 1. Install uv: (https://docs.astral.sh/uv/).
-2. `uv sync` to install all required dependencies.
-3. `source .venv/bin/activate` to activate the environment.
-
+1. `uv sync` to install all required dependencies.
+1. `source .venv/bin/activate` to activate the environment.
 
 ## Usage
 
@@ -45,13 +44,11 @@ make_json.py \
 
 ## Commands
 
-* [`zensical new`][new] - Create a new project
-* [`zensical serve`][serve] - Start local web server
-* [`zensical build`][build] - Build your site
+- [`zensical new`][new] - Create a new project
 
-  [new]: https://zensical.org/docs/usage/new/
-  [serve]: https://zensical.org/docs/usage/preview/
-  [build]: https://zensical.org/docs/usage/build/
+- [`zensical serve`][serve] - Start local web server
+
+- [`zensical build`][build] - Build your site
 
 ## Examples
 
@@ -61,11 +58,15 @@ make_json.py \
 
 !!! note
 
-    This is a **note** admonition. Use it to provide helpful information.
+```
+This is a **note** admonition. Use it to provide helpful information.
+```
 
 !!! warning
 
-    This is a **warning** admonition. Be careful!
+```
+This is a **warning** admonition. Be careful!
+```
 
 ### Details
 
@@ -73,23 +74,25 @@ make_json.py \
 
 ??? info "Click to expand for more info"
 
-    This content is hidden until you click to expand it.
-    Great for FAQs or long explanations.
+```
+This content is hidden until you click to expand it.
+Great for FAQs or long explanations.
+```
 
 ## Code Blocks
 
 > Go to [documentation](https://zensical.org/docs/authoring/code-blocks/)
 
-``` python hl_lines="2" title="Code blocks"
+```python hl_lines="2" title="Code blocks"
 def greet(name):
     print(f"Hello, {name}!") # (1)!
 
 greet("Python")
 ```
 
-1.  > Go to [documentation](https://zensical.org/docs/authoring/code-blocks/#code-annotations)
+1. > Go to [documentation](https://zensical.org/docs/authoring/code-blocks/#code-annotations)
 
-    Code annotations allow to attach notes to lines of code.
+   Code annotations allow to attach notes to lines of code.
 
 Code can also be highlighted inline: `#!python print("Hello, Python!")`.
 
@@ -99,21 +102,25 @@ Code can also be highlighted inline: `#!python print("Hello, Python!")`.
 
 === "Python"
 
-    ``` python
-    print("Hello from Python!")
-    ```
+````
+``` python
+print("Hello from Python!")
+```
+````
 
 === "Rust"
 
-    ``` rs
-    println!("Hello from Rust!");
-    ```
+````
+``` rs
+println!("Hello from Rust!");
+```
+````
 
 ## Diagrams
 
 > Go to [documentation](https://zensical.org/docs/authoring/diagrams/)
 
-``` mermaid
+```mermaid
 graph LR
   A[Start] --> B{Error?};
   B -->|Yes| C[Hmm...];
@@ -130,8 +137,7 @@ Here's a sentence with a footnote.[^1]
 
 Hover it, to see a tooltip.
 
-[^1]: This is the footnote.
-
+\[^1\]: This is the footnote.
 
 ## Formatting
 
@@ -148,28 +154,29 @@ Hover it, to see a tooltip.
 
 > Go to [documentation](https://zensical.org/docs/authoring/icons-emojis/)
 
-* :sparkles: `:sparkles:`
-* :rocket: `:rocket:`
-* :tada: `:tada:`
-* :memo: `:memo:`
-* :eyes: `:eyes:`
+- :sparkles: `:sparkles:`
+- :rocket: `:rocket:`
+- :tada: `:tada:`
+- :memo: `:memo:`
+- :eyes: `:eyes:`
 
 ## Maths
 
 > Go to [documentation](https://zensical.org/docs/authoring/math/)
 
 $$
-\cos x=\sum_{k=0}^{\infty}\frac{(-1)^k}{(2k)!}x^{2k}
+\\cos x=\\sum\_{k=0}^{\\infty}\\frac{(-1)^k}{(2k)!}x^{2k}
 $$
 
 !!! warning "Needs configuration"
-    Note that MathJax is included via a `script` tag on this page and is not
-    configured in the generated default configuration to avoid including it
-    in a pages that do not need it. See the documentation for details on how
-    to configure it on all your pages if they are more Maths-heavy than these
-    simple starter pages.
+Note that MathJax is included via a `script` tag on this page and is not
+configured in the generated default configuration to avoid including it
+in a pages that do not need it. See the documentation for details on how
+to configure it on all your pages if they are more Maths-heavy than these
+simple starter pages.
 
 <script id="MathJax-script" src="https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js"></script>
+
 <script>
   window.MathJax = {
     tex: {
@@ -196,10 +203,10 @@ $$
 
 > Go to [documentation](https://zensical.org/docs/authoring/lists/#using-task-lists)
 
-* [x] Install Zensical
-* [x] Configure `zensical.toml`
-* [x] Write amazing documentation
-* [ ] Deploy anywhere
+- [x] Install Zensical
+- [x] Configure `zensical.toml`
+- [x] Write amazing documentation
+- [ ] Deploy anywhere
 
 ## Tooltips
 
@@ -207,4 +214,7 @@ $$
 
 [Hover me][example]
 
-  [example]: https://example.com "I'm a tooltip!"
+[build]: https://zensical.org/docs/usage/build/
+[example]: https://example.com "I'm a tooltip!"
+[new]: https://zensical.org/docs/usage/new/
+[serve]: https://zensical.org/docs/usage/preview/
