@@ -6,6 +6,8 @@ import math
 import sqlite3
 import re
 from gtf_to_db.fasta_utils import gtf_to_sequence, get_transcript_FASTA
+from gtf_to_db.db_utils import write_to_db
+
 
 __all__ = [
     "chunker",
@@ -63,7 +65,7 @@ def get_codons(seq, frame):
     :type frame: int
     :return: List of split codons
     :rtype: list
-    """    
+    """
 
     # split sequence into codons for a given frame
     rna_seq = seq[frame:]
@@ -80,7 +82,7 @@ def fasta_codon_search(RNA, frame):
     :type frame: int
     :return: list of RNA nucleotides, split by frame.
     :rtype: list
-    """    
+    """
 
     # Begin RNA reading frame at Nth position, then iterate over in chunks of 3
     return list(map("".join, zip(*[iter(RNA[frame:])] * 3)))
@@ -95,7 +97,7 @@ def filter_codons(codons, targets):
     :type targets: list
     :return: Filtered set of codons.
     :rtype: list
-    """    
+    """
 
     target_set = set(targets)  # O(1) lookups
     return [(codon, idx) for idx, codon in enumerate(codons) if codon in target_set]
@@ -110,7 +112,7 @@ def match_codons(start_codons, stop_codons):
     :type stop_codons: list
     :return: List of codons pairs
     :rtype: list
-    """    
+    """
 
     if not stop_codons:
         return [(start, None) for start in start_codons]
@@ -144,7 +146,7 @@ def return_FASTA(FASTA, codon_tuple):
     :type codon_tuple: tuple
     :return: uORF FASTA sequence
     :rtype: str
-    """    
+    """
 
     # check if stop is None
     if codon_tuple[1] is None:
@@ -162,7 +164,7 @@ def return_FASTA_optimized(FASTA, codon_tuple):
     :type codon_tuple: tuple
     :return: uORF FASTA sequence
     :rtype: str
-    """    
+    """
 
     start = codon_tuple[0][1]
     end = codon_tuple[1]
@@ -335,7 +337,7 @@ def import_reference(path):
     :type path: str
     :return: A concatenated FASTA sequence.
     :rtype: str
-    """    
+    """
 
     # convert FASTA entry to sequence
     sequence = []
@@ -357,7 +359,7 @@ def get_exon_field_num(string):
     :raises Exception: Could not detect the index for the given string.
     :return: index of "exon_number" field.
     :rtype: int
-    """    
+    """
 
     # find index of exon number
     pattern = r"exon_number"
@@ -380,8 +382,8 @@ def get_transcript_field_num(string):
     :raises Exception: Could not detect the index for the given string.
     :return: index of "transcript_id" field.
     :rtype: int
-    """    
-    
+    """
+
     # find index of exon number
     pattern = r"transcript_id"
     index = next(
@@ -403,8 +405,8 @@ def get_transcript_version_field_num(string):
     :raises Exception: Could not detect the index for the given string.
     :return: index of "transcript_version" field.
     :rtype: int
-    """    
-    
+    """
+
     # find index of exon number
     pattern = r"transcript_version"
     index = next(
@@ -518,7 +520,7 @@ def gtf_to_uorf_db(
     seqid_key=None,
     seqid_value=None,
 ):
-    """Identify uORF sequences from an input GTF file, provide basic annotations,
+    """Main function of the SURF-A package. Identify uORF sequences from an input GTF file, provide basic annotations,
     and supply a sqlite database of information.
 
     :param gtf_path: Path to Ensembl GTF file.
@@ -536,7 +538,7 @@ def gtf_to_uorf_db(
     :param seqid_value: Value to use for mapping between contigs and GTF seqids, should match those in seqid_path file, defaults to None
     :type seqid_value: str, optional
     :raises Exception: Exception if an input path does not exist.
-    """    
+    """
 
     # setup logging
     logger = logging.getLogger(__name__)
@@ -864,54 +866,68 @@ def gtf_to_uorf_db(
     # 2. UTR exon table
     # 3. uORF table
 
-    # transcript table
-    transcript_df
-    logger.debug(f"Saving transcript table with columns: {transcript_df.columns}.")
+    if False:
+        # transcript table
+        transcript_df
+        logger.debug(f"Saving transcript table with columns: {transcript_df.columns}.")
 
-    # exon table
-    exons.drop(columns=["attribute"], inplace=True)
-    logger.debug(f"Saving exons table with columns: {exons.columns}.")
+        # exon table
+        exons.drop(columns=["attribute"], inplace=True)
+        logger.debug(f"Saving exons table with columns: {exons.columns}.")
 
-    # uorf table
-    uorf_table
-    logger.debug(f"Saving uORFs table with columns: {uorf_table.columns}.")
+        # uorf table
+        uorf_table
+        logger.debug(f"Saving uORFs table with columns: {uorf_table.columns}.")
 
-    # cds_df
-    first_cds.drop(columns=["seqname", "end"], inplace=True)
-    logger.debug(f"Saving CDS table with columns: {first_cds.columns}.")
+        # cds_df
+        first_cds.drop(columns=["seqname", "end"], inplace=True)
+        logger.debug(f"Saving CDS table with columns: {first_cds.columns}.")
+
+        # rename columns in utr_df
+        utr_df.rename(columns={"seqname": "chrom"}, inplace=True)
+
+        # force dtypes in UTR_df
+        utr_df.loc[:, "exon"] = utr_df.exon.astype(int)
+
+        # set explicit output cols for SQL db
+        utr_cols = [
+            "transcript",
+            "exon",
+            "length",
+            "rel_start",
+            "rel_stop",
+            "start",
+            "end",
+            "chrom",
+            "frame_state",
+            "FASTA",
+        ]
+        utr_df = utr_df[utr_cols]
+        logger.debug(f"Saving UTR table with columns: {utr_df.columns}.")
+
+        # create database
+        logger.info("Writing output to SQL database.")
+
+        db_path = os.path.join(output_dir, "uorfs.db")
+        conn = sqlite3.connect(db_path)
+        transcript_df.to_sql("transcripts", conn, if_exists="replace", index=False)
+        utr_df.to_sql("utr", conn, if_exists="replace", index=False)
+        uorf_table.to_sql("uorfs", conn, if_exists="replace", index=False)
+        first_cds.to_sql("cds", conn, if_exists="replace", index=False)
+
+        conn.close()
+        logger.info(f"Database saved to {db_path}.")
+        print(f"Database saved to {db_path}")
 
     # rename columns in utr_df
     utr_df.rename(columns={"seqname": "chrom"}, inplace=True)
 
-    # force dtypes in UTR_df
-    utr_df.loc[:, "exon"] = utr_df.exon.astype(int)
-
-    # set explicit output cols for SQL db
-    utr_cols = [
-        "transcript",
-        "exon",
-        "length",
-        "rel_start",
-        "rel_stop",
-        "start",
-        "end",
-        "chrom",
-        "frame_state",
-        "FASTA",
-    ]
-    utr_df = utr_df[utr_cols]
-    logger.debug(f"Saving UTR table with columns: {utr_df.columns}.")
-
-    # create database
-    logger.info("Writing output to SQL database.")
-
-    db_path = os.path.join(output_dir, "uorfs.db")
-    conn = sqlite3.connect(db_path)
-    transcript_df.to_sql("transcripts", conn, if_exists="replace", index=False)
-    utr_df.to_sql("utr", conn, if_exists="replace", index=False)
-    uorf_table.to_sql("uorfs", conn, if_exists="replace", index=False)
-    first_cds.to_sql("cds", conn, if_exists="replace", index=False)
-
-    conn.close()
-    logger.info(f"Database saved to {db_path}.")
-    print(f"Database saved to {db_path}")
+    write_to_db(
+        dataframes={
+            "transcripts": transcript_df,
+            "utr": utr_df,
+            "uorfs": uorf_table,
+            "cds": first_cds,
+        },
+        db_path=os.path.join(output_dir, "uorfs.db"),
+    )
