@@ -133,12 +133,6 @@ graph LR
 
 > Go to [documentation](https://zensical.org/docs/authoring/footnotes/)
 
-Here's a sentence with a footnote.[^1]
-
-Hover it, to see a tooltip.
-
-\[^1\]: This is the footnote.
-
 ## Formatting
 
 > Go to [documentation](https://zensical.org/docs/authoring/formatting/)
