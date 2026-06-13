@@ -3,7 +3,6 @@ import pandas as pd
 import numpy as np
 import os
 import math
-import sqlite3
 import re
 from gtf_to_db.fasta_utils import gtf_to_sequence, get_transcript_FASTA
 from gtf_to_db.db_utils import write_to_db
@@ -638,6 +637,7 @@ def gtf_to_uorf_db(
 
     # bool: determine if we have a new or old 5'UTR annotation format
     new_utr_format = "five_prime_utr" in ensg_df.feature.values
+    logger.debug(f"Input GTF file uses new 5'UTR annotation format: {new_utr_format}.")
 
     if new_utr_format:
         # ensembl dataframe is newer format which delimits 5'UTR
@@ -869,15 +869,19 @@ def gtf_to_uorf_db(
     # rename columns in utr_df
     utr_df.rename(columns={"seqname": "chrom"}, inplace=True)
 
-    db_path = os.path.join(output_dir, "uorfs.db"
+    # unpack exon ID
+    exons["exon_id"] = exons.attribute.str.split(";").str[7].str.split(" ").str[2].str.strip('"')
+
+    db_path = os.path.join(output_dir, "uorfs.db")
     write_to_db(
         dataframes={
             "transcripts": transcript_df,
             "utr": utr_df,
             "uorfs": uorf_table,
             "cds": first_cds,
+            "exons": exons
         },
-        db_path=db_path),
-    )
+        db_path=db_path)
+    
     logger.info(f"Database saved to {db_path}.")
     print(f"Database saved to {db_path}")
