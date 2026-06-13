@@ -866,62 +866,10 @@ def gtf_to_uorf_db(
     # 2. UTR exon table
     # 3. uORF table
 
-    if False:
-        # transcript table
-        transcript_df
-        logger.debug(f"Saving transcript table with columns: {transcript_df.columns}.")
-
-        # exon table
-        exons.drop(columns=["attribute"], inplace=True)
-        logger.debug(f"Saving exons table with columns: {exons.columns}.")
-
-        # uorf table
-        uorf_table
-        logger.debug(f"Saving uORFs table with columns: {uorf_table.columns}.")
-
-        # cds_df
-        first_cds.drop(columns=["seqname", "end"], inplace=True)
-        logger.debug(f"Saving CDS table with columns: {first_cds.columns}.")
-
-        # rename columns in utr_df
-        utr_df.rename(columns={"seqname": "chrom"}, inplace=True)
-
-        # force dtypes in UTR_df
-        utr_df.loc[:, "exon"] = utr_df.exon.astype(int)
-
-        # set explicit output cols for SQL db
-        utr_cols = [
-            "transcript",
-            "exon",
-            "length",
-            "rel_start",
-            "rel_stop",
-            "start",
-            "end",
-            "chrom",
-            "frame_state",
-            "FASTA",
-        ]
-        utr_df = utr_df[utr_cols]
-        logger.debug(f"Saving UTR table with columns: {utr_df.columns}.")
-
-        # create database
-        logger.info("Writing output to SQL database.")
-
-        db_path = os.path.join(output_dir, "uorfs.db")
-        conn = sqlite3.connect(db_path)
-        transcript_df.to_sql("transcripts", conn, if_exists="replace", index=False)
-        utr_df.to_sql("utr", conn, if_exists="replace", index=False)
-        uorf_table.to_sql("uorfs", conn, if_exists="replace", index=False)
-        first_cds.to_sql("cds", conn, if_exists="replace", index=False)
-
-        conn.close()
-        logger.info(f"Database saved to {db_path}.")
-        print(f"Database saved to {db_path}")
-
     # rename columns in utr_df
     utr_df.rename(columns={"seqname": "chrom"}, inplace=True)
 
+    db_path = os.path.join(output_dir, "uorfs.db"
     write_to_db(
         dataframes={
             "transcripts": transcript_df,
@@ -929,5 +877,7 @@ def gtf_to_uorf_db(
             "uorfs": uorf_table,
             "cds": first_cds,
         },
-        db_path=os.path.join(output_dir, "uorfs.db"),
+        db_path=db_path),
     )
+    logger.info(f"Database saved to {db_path}.")
+    print(f"Database saved to {db_path}")
