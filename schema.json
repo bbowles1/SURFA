@@ -45,19 +45,19 @@
         },
         {
           "name": "length",
-          "type": "TEXT",
+          "type": "INTEGER",
           "nullable": false,
           "description": "Number of nucleotides in the transcript FASTA."
         },
         {
           "name": "utr_len",
-          "type": "TEXT",
+          "type": "INTEGER",
           "nullable": false,
           "description": "Number of nucleotides in the transcript FASTA."
         },
         {
           "name": "uorf_count",
-          "type": "TEXT",
+          "type": "INTEGER",
           "nullable": false,
           "description": "Number of uORFs identified in the 5'UTR."
         }
@@ -166,35 +166,42 @@
         },
         {
           "name": "exon",
-          "type": "TEXT",
+          "type": "INTEGER",
           "nullable": false,
           "primary_key": false,
           "description": "Transcript number which contains the CDS start codon and sequence."
         },
         {
           "name": "length",
-          "type": "TEXT",
+          "type": "INTEGER",
           "nullable": false,
           "primary_key": false,
           "description": "Number of nucleotides in the CDS."
         },
         {
           "name": "start",
-          "type": "TEXT",
+          "type": "INTEGER",
           "nullable": false,
           "primary_key": false,
           "description": "Index of the CDS start site within the exon FASTA sequence."
         },
         {
-          "name": "rel_start",
+          "name": "FASTA",
           "type": "TEXT",
+          "nullable": false,
+          "primary_key": false,
+          "description": "DNA FASTA sequence of the CDS."
+        },
+        {
+          "name": "rel_start",
+          "type": "INTEGER",
           "nullable": false,
           "primary_key": false,
           "description": "Index of the CDS start site within the exon FASTA sequence."
         },
         {
           "name": "rel_stop",
-          "type": "TEXT",
+          "type": "INTEGER",
           "nullable": false,
           "primary_key": false,
           "description": "End of the 5'UTR exon sequence."
@@ -214,42 +221,42 @@
         },
         {
           "name": "exon",
-          "type": "TEXT",
+          "type": "INTEGER",
           "nullable": false,
           "primary_key": false,
           "description": "Exon number of 5'UTR sequence."
         },
         {
           "name": "length",
-          "type": "TEXT",
+          "type": "INTEGER",
           "nullable": false,
           "primary_key": false,
           "description": "Length of the 5'UTR sequence."
         },
         {
           "name": "rel_start",
-          "type": "TEXT",
+          "type": "INTEGER",
           "nullable": false,
           "primary_key": false,
           "description": "Index position within the 5'UTR FASTA sequence where this particular exon begins."
         },
         {
           "name": "rel_stop",
-          "type": "TEXT",
+          "type": "INTEGER",
           "nullable": false,
           "primary_key": false,
           "description": "Index position within the 5'UTR FASTA sequence where this particular exon ends."
         },
         {
           "name": "start",
-          "type": "TEXT",
+          "type": "INTEGER",
           "nullable": false,
           "primary_key": false,
           "description": "???"
         },
         {
           "name": "end",
-          "type": "TEXT",
+          "type": "INTEGER",
           "nullable": false,
           "primary_key": false,
           "description": "???"
@@ -263,7 +270,7 @@
         },
         {
           "name": "frame_state",
-          "type": "TEXT",
+          "type": "INTEGER",
           "nullable": false,
           "primary_key": false,
           "description": "Index position of the CDS start (0, 1, or 2). Used to determine whether uORFs are in-frame or out of frame with the CDS start."
