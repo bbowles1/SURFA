@@ -489,6 +489,7 @@ dependencies = [
     { name = "flask" },
     { name = "numpy" },
     { name = "pandas" },
+    { name = "pymdown-extensions" },
 ]
 
 [package.dev-dependencies]
@@ -503,6 +504,7 @@ requires-dist = [
     { name = "flask", specifier = ">=3.1.0" },
     { name = "numpy", specifier = ">=2.2.3" },
     { name = "pandas", specifier = ">=2.2.3,<3.0.0" },
+    { name = "pymdown-extensions", specifier = ">=10.21.3" },
 ]
 
 [package.metadata.requires-dev]
