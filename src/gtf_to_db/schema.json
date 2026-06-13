@@ -176,7 +176,14 @@
           "type": "INTEGER",
           "nullable": false,
           "primary_key": false,
-          "description": "Index of the CDS start site within the exon FASTA sequence."
+          "description": "Genomic start coordinate of the CDS."
+        },
+        {
+          "name": "end",
+          "type": "INTEGER",
+          "nullable": false,
+          "primary_key": false,
+          "description": "Genomic end coordinate of the first CDS-containing exon."
         },
         {
           "name": "FASTA",
@@ -198,6 +205,69 @@
           "nullable": false,
           "primary_key": false,
           "description": "End of the 5'UTR exon sequence."
+        }
+      ]
+    },
+    {
+      "name": "exons",
+      "description": "Information on any exons containing a UTR sequence.",
+      "columns": [
+
+        {
+          "name": "exon_id",
+          "type": "TEXT",
+          "nullable": false,
+          "primary_key": true,
+          "description": "Exon ID, including version number, eg ENSE00001427522.2."
+        },        
+        {
+          "name": "transcript",
+          "type": "TEXT",
+          "nullable": false,
+          "primary_key": false,
+          "description": "Transcript ID, including version number, eg ENST00000405005.8."
+        },
+        {
+          "name": "start",
+          "type": "INTEGER",
+          "nullable": false,
+          "primary_key": false,
+          "description": "Genomic coordinates of the exon start site from the input GTF."
+        },
+        {
+          "name": "end",
+          "type": "INTEGER",
+          "nullable": false,
+          "primary_key": false,
+          "description": "Genomic coordinates of the exon end site from the input GTF."
+        },
+        {
+          "name": "exon",
+          "type": "INTEGER",
+          "nullable": false,
+          "primary_key": false,
+          "description": "Exon number."
+        },
+        {
+          "name": "length",
+          "type": "INTEGER",
+          "nullable": false,
+          "primary_key": false,
+          "description": "Length of the exon in base pairs."
+        },
+        {
+          "name": "rel_start",
+          "type": "INTEGER",
+          "nullable": false,
+          "primary_key": false,
+          "description": "Index of the exon start position within the overall FASTA sequence."
+        },
+        {
+          "name": "rel_end",
+          "type": "INTEGER",
+          "nullable": false,
+          "primary_key": false,
+          "description": "Index of the exon stop position within the overall FASTA sequence."
         }
       ]
     },
@@ -245,14 +315,14 @@
           "type": "INTEGER",
           "nullable": false,
           "primary_key": false,
-          "description": "???"
+          "description": "Genomic start position of the UTR, imported from the input GTF file."
         },
         {
           "name": "end",
           "type": "INTEGER",
           "nullable": false,
           "primary_key": false,
-          "description": "???"
+          "description": "Genomic end position of the UTR, imported from the input GTF file."
         },
         {
           "name": "chrom",
