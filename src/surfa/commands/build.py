@@ -51,20 +51,12 @@ def register(subparsers: argparse._SubParsersAction) -> None:  # noqa: SLF001
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
 
+    parser.add_argument("--gtf", required=True, help="Path to Ensembl-format GTF file.")
+
+    parser.add_argument("--fasta", required=True, help="Path to input FASTA file.")
+
     parser.add_argument(
-        "--gtf", 
-        required=True, 
-        help="Path to Ensembl-format GTF file.")
-    
-    parser.add_argument(
-        "--fasta", 
-        required=True, 
-        help="Path to input FASTA file.")
-    
-    parser.add_argument(
-        "--output-dir", 
-        required=True, 
-        help="Output Directory for files."
+        "--output-dir", required=True, help="Output Directory for files."
     )
 
     parser.add_argument(
@@ -119,7 +111,7 @@ def run(args: argparse.Namespace) -> int:
     seqid_key = args.seqid_key
     seqid_value = args.seqid_value
 
-    # exec build  
+    # exec build
     gtf_to_uorf_db(
         gtf_path, FASTA_path, output_dir, source, seqid_path, seqid_key, seqid_value
     )

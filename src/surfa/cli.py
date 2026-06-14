@@ -33,7 +33,8 @@ def make_parser() -> argparse.ArgumentParser:
 
     # -- global flags --
     parser.add_argument(
-        "--version", "-V",
+        "--version",
+        "-V",
         action="version",
         version="%(prog)s 0.1.0",
     )
@@ -49,7 +50,6 @@ def make_parser() -> argparse.ArgumentParser:
         default="surfa.log",
         help="Write logs to this file (default: surfa.log in the current directory).",
     )
-
 
     # -- subcommands --
     subparsers = parser.add_subparsers(
@@ -87,7 +87,6 @@ def _configure_logging(log_level: str, log_file: str | None) -> None:
     )
 
 
-
 def main(argv: list[str] | None = None) -> int:
     """Parse *argv* and dispatch to the appropriate subcommand.
 
@@ -97,7 +96,6 @@ def main(argv: list[str] | None = None) -> int:
     :rtype: args.func
     """
 
-
     parser = make_parser()
     args = parser.parse_args(argv)
 
@@ -105,13 +103,11 @@ def main(argv: list[str] | None = None) -> int:
     if args.command is None:
         parser.print_help()
         return 0
-    
+
     _configure_logging(args.log_level, args.log_file)
 
     return args.func(args)
 
 
 if __name__ == "__main__":
-    sys.exit(
-        main()
-        )
+    sys.exit(main())

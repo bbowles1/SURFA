@@ -20,6 +20,7 @@ logger = logging.getLogger(__name__)
 # QUERY #
 #########
 
+
 def register(subparsers: argparse._SubParsersAction) -> None:  # noqa: SLF001
     """Attach the `query` subcommand to *subparsers*.
 
@@ -35,20 +36,21 @@ def register(subparsers: argparse._SubParsersAction) -> None:  # noqa: SLF001
     )
 
     parser.add_argument(
-        '--db', 
-        required=True, 
-        help='Path to uorfs.db (created using surfa build command).')
-    
+        "--db",
+        required=True,
+        help="Path to uorfs.db (created using surfa build command).",
+    )
+
     parser.add_argument(
-        '--transcript', 
-        required=True, 
-        help='Target transcript (including version number).')
-    
+        "--transcript",
+        required=True,
+        help="Target transcript (including version number).",
+    )
+
     parser.add_argument(
-        '--output', 
-        default="query.json",
-        help='Output file name (incl JSON extension).')
-    
+        "--output", default="query.json", help="Output file name (incl JSON extension)."
+    )
+
     parser.set_defaults(func=run)
 
 
@@ -65,14 +67,11 @@ def run(args: argparse.Namespace) -> int:
     logger.debug("Full args: %s", args)
 
     # Parse arguments
-    args = parser.parse_args()
     database_path = args.db
     target_transcript = args.transcript
     outpath = args.output
 
     # call main function
-    assemble_json_from_transcript(database_path, 
-                                  target_transcript, 
-                                  outpath)
+    assemble_json_from_transcript(database_path, target_transcript, outpath)
 
     return 0
