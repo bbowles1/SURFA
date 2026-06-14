@@ -5,7 +5,7 @@ import os
 import math
 import re
 from gtf_to_db.fasta_utils import gtf_to_sequence, get_transcript_FASTA
-from gtf_to_db.db_utils import write_to_db
+from gtf_to_db.db_utils import write_to_db, create_metadata_df
 
 
 __all__ = [
@@ -550,6 +550,20 @@ def gtf_to_uorf_db(
             raise Exception(f"Path {path} does not exist!")
     logger.debug("All input paths exist.")
 
+    ######################
+    # GET BUILD METADATA #
+    ######################
+
+    # create database build metadata
+    md5_dict = {
+        "gtf_path": gtf_path,
+        "FASTA_path": FASTA_path,
+        "seqid_path": seqid_path,
+    }
+    logger.debug(f"Creating metadata dataframe with inputs: {md5_dict}.")
+
+    metadata_df = create_metadata_df(md5_dict)
+
     ###############
     # DATA IMPORT #
     ###############
@@ -870,7 +884,9 @@ def gtf_to_uorf_db(
     utr_df.rename(columns={"seqname": "chrom"}, inplace=True)
 
     # unpack exon ID
-    exons["exon_id"] = exons.attribute.str.split(";").str[7].str.split(" ").str[2].str.strip('"')
+    exons["exon_id"] = (
+        exons.attribute.str.split(";").str[7].str.split(" ").str[2].str.strip('"')
+    )
 
     db_path = os.path.join(output_dir, "uorfs.db")
     write_to_db(
@@ -879,9 +895,11 @@ def gtf_to_uorf_db(
             "utr": utr_df,
             "uorfs": uorf_table,
             "cds": first_cds,
-            "exons": exons
+            "exons": exons,
+            "build_data": metadata_df,
         },
-        db_path=db_path)
-    
+        db_path=db_path,
+    )
+
     logger.info(f"Database saved to {db_path}.")
     print(f"Database saved to {db_path}")

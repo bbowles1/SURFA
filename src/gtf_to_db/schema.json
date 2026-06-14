@@ -346,6 +346,34 @@
           "description": "DNA FASTA sequence of the 5'UTR."
         }
       ]
+    },
+
+    {
+      "name": "build_data",
+      "description": "Information on the build inputs for the database.",
+      "columns": [
+        {
+          "name": "input",
+          "type": "TEXT",
+          "nullable": false,
+          "primary_key": true,
+          "description": "Name of input parameter (ie FASTA_path)."
+        },
+        {
+          "name": "path",
+          "type": "TEXT",
+          "nullable": true,
+          "primary_key": false,
+          "description": "Path to input file."
+        },
+        {
+          "name": "md5sum",
+          "type": "TEXT",
+          "nullable": true,
+          "primary_key": false,
+          "description": "md5sum of input file."
+        }
+      ]
     }
   ]
 }
