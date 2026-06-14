@@ -99,33 +99,6 @@ if __name__ == "__main__":
                         If your contigs match between the GTF and FASTA files, you should leave all three
                         input arguments blank. Please see documentation for more details.""")
 
-    # set params for testing
-    if False:
-        gtf_path = "/Users/bbowles/Documents/Code/refdata/ensembl/Homo_sapiens.GRCh38.115.gtf.gz"
-        FASTA_path = "/Users/bbowles/Documents/Code/refdata/FASTA/GRCh38/Homo_sapiens.GRCh38.dna.primary_assembly.fa"
-        output_dir = "/Users/bbowles/Documents/Code/tmp"
-        source = "ensembl_havana"
-        seqid_path = "/Users/bbowles/Documents/Code/GitHub/d3-uORF-Viewer/deprecating-pybedtools/seqid_map.csv"
-        seqid_value = "number"
-        seqid_key = "chr_abbreviation"
-
-    # set params for testing
-    if False:
-        # required
-        gtf_path = (
-            "/Users/bbowles/Documents/Code/GitHub/d3-uORF-Viewer/tests/mini.gtf.gz"
-        )
-        FASTA_path = (
-            "/Users/bbowles/Documents/Code/GitHub/d3-uORF-Viewer/tests/minifasta.fa"
-        )
-        output_dir = "/Users/bbowles/Documents/Code/tmp"
-        source = "ensembl_havana"
-
-        # optional
-        seqid_path = None
-        seqid_value = None
-        seqid_key = None
-
     # call main function
     gtf_to_uorf_db(
         gtf_path, FASTA_path, output_dir, source, seqid_path, seqid_key, seqid_value
