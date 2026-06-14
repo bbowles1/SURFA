@@ -3,9 +3,10 @@ import pandas as pd
 import numpy as np
 import os
 import math
-import sqlite3
 import re
 from gtf_to_db.fasta_utils import gtf_to_sequence, get_transcript_FASTA
+from gtf_to_db.db_utils import write_to_db, create_metadata_df
+
 
 __all__ = [
     "chunker",
@@ -55,26 +56,63 @@ def score_kozak(codon):
 
 
 def get_codons(seq, frame):
+    """Split nucleotide sequence into codon blocks for a given frame
+
+    :param seq: Nucleotide sequence to split
+    :type seq: str
+    :param frame: Frame (0,1,2) to split on.
+    :type frame: int
+    :return: List of split codons
+    :rtype: list
+    """
+
     # split sequence into codons for a given frame
     rna_seq = seq[frame:]
     return [rna_seq[i : i + 3] for i in range(0, len(rna_seq) - 2, 3)]
 
 
 def fasta_codon_search(RNA, frame):
+    """Split nucleotide sequence into codon blocks for a given frame.
+    Faster version of get_codons.
+
+    :param RNA: RNA nucleotide sequence
+    :type RNA: str
+    :param frame: Frame (0,1,2) to split on.
+    :type frame: int
+    :return: list of RNA nucleotides, split by frame.
+    :rtype: list
+    """
+
     # Begin RNA reading frame at Nth position, then iterate over in chunks of 3
     return list(map("".join, zip(*[iter(RNA[frame:])] * 3)))
 
 
 def filter_codons(codons, targets):
+    """Filter codons to a target list.
+
+    :param codons: List of nucleotide codons.
+    :type codons: list
+    :param targets: List of target codons (ie AUG, CUG).
+    :type targets: list
+    :return: Filtered set of codons.
+    :rtype: list
+    """
+
     target_set = set(targets)  # O(1) lookups
     return [(codon, idx) for idx, codon in enumerate(codons) if codon in target_set]
 
 
 def match_codons(start_codons, stop_codons):
+    """Find next downstream stop codon for each start codon using numpy.
+
+    :param start_codons: List of tuples with format (start_codon, position)
+    :type start_codons: List
+    :param stop_codons: List of tuples with format (stop_codon, position)
+    :type stop_codons: list
+    :return: List of codons pairs
+    :rtype: list
     """
-    Find next downstream stop codon for each start codon using numpy
-    Returns: list of tuples (start_codon_info, stop_codon_info or None)
-    """
+
     if not stop_codons:
         return [(start, None) for start in start_codons]
     if not start_codons:
@@ -99,6 +137,16 @@ def match_codons(start_codons, stop_codons):
 
 
 def return_FASTA(FASTA, codon_tuple):
+    """Subset an input FASTA sequence to the supplied codon boundaries.
+
+    :param FASTA: FASTA sequence of the UTR
+    :type FASTA: str
+    :param codon_tuple: tuple with format ((start_codon, position), (stop_codon, position))
+    :type codon_tuple: tuple
+    :return: uORF FASTA sequence
+    :rtype: str
+    """
+
     # check if stop is None
     if codon_tuple[1] is None:
         return FASTA[codon_tuple[0][1] :]
@@ -107,6 +155,16 @@ def return_FASTA(FASTA, codon_tuple):
 
 
 def return_FASTA_optimized(FASTA, codon_tuple):
+    """Optimized approach to return FASTA sequence from start and stop tuples
+
+    :param FASTA: FASTA sequence of the UTR
+    :type FASTA: str
+    :param codon_tuple: tuple with format ((start_codon, position), (stop_codon, position))
+    :type codon_tuple: tuple
+    :return: uORF FASTA sequence
+    :rtype: str
+    """
+
     start = codon_tuple[0][1]
     end = codon_tuple[1]
 
@@ -272,6 +330,14 @@ def get_uorfs(input_df):
 
 
 def import_reference(path):
+    """Parse a reference FASTA file. Intended to import test data.
+
+    :param path: Path to reference FASTA sequence.
+    :type path: str
+    :return: A concatenated FASTA sequence.
+    :rtype: str
+    """
+
     # convert FASTA entry to sequence
     sequence = []
     with open(path) as f:
@@ -285,6 +351,15 @@ def import_reference(path):
 
 
 def get_exon_field_num(string):
+    """Find the index of the exon number in a GTF file's attribute column.
+
+    :param string: attribute string from a GTF file.
+    :type string: str
+    :raises Exception: Could not detect the index for the given string.
+    :return: index of "exon_number" field.
+    :rtype: int
+    """
+
     # find index of exon number
     pattern = r"exon_number"
     index = next(
@@ -299,6 +374,15 @@ def get_exon_field_num(string):
 
 
 def get_transcript_field_num(string):
+    """Find the index of the transcript ID in a GTF file's attribute column.
+
+    :param string: attribute string from a GTF file.
+    :type string: str
+    :raises Exception: Could not detect the index for the given string.
+    :return: index of "transcript_id" field.
+    :rtype: int
+    """
+
     # find index of exon number
     pattern = r"transcript_id"
     index = next(
@@ -313,6 +397,15 @@ def get_transcript_field_num(string):
 
 
 def get_transcript_version_field_num(string):
+    """Find the index of the transcript version in a GTF file's attribute column.
+
+    :param string: attribute string from a GTF file.
+    :type string: str
+    :raises Exception: Could not detect the index for the given string.
+    :return: index of "transcript_version" field.
+    :rtype: int
+    """
+
     # find index of exon number
     pattern = r"transcript_version"
     index = next(
@@ -327,6 +420,18 @@ def get_transcript_version_field_num(string):
 
 
 def check_identity(region_start, strand, CDS_start):
+    """Check whether an input GTF UTR region is 5' or 3'
+
+    :param region_start: UTR region start position
+    :type region_start: int
+    :param strand: Strand (+ or -)
+    :type strand: str
+    :param CDS_start: Coding DNA sequence start position
+    :type CDS_start: int
+    :return: 5 or 3
+    :rtype: int
+    """
+
     if strand == "+":
         if region_start > CDS_start:
             return 3
@@ -340,6 +445,17 @@ def check_identity(region_start, strand, CDS_start):
 
 
 def unpack_transcript(input_df, df_name):
+    """Unpack the transcript from the attribute column to a separate field.
+    Includes handling for a variety of GTF formats.
+
+    :param input_df: Pandas Dataframe.
+    :type input_df: pd.DataFrame
+    :param df_name: Name of dataframe for logging.
+    :type df_name: str
+    :return: Dataframe with transcript identity unpacked to specific column.
+    :rtype: pd.DataDrame
+    """
+
     logger = logging.getLogger(__name__)
     logger.debug(
         "Checking input dataframe for separate transcript and version definitions."
@@ -403,6 +519,26 @@ def gtf_to_uorf_db(
     seqid_key=None,
     seqid_value=None,
 ):
+    """Main function of the SURF-A package. Identify uORF sequences from an input GTF file, provide basic annotations,
+    and supply a sqlite database of information.
+
+    :param gtf_path: Path to Ensembl GTF file.
+    :type gtf_path: str
+    :param FASTA_path: Path to FASTA sequence.
+    :type FASTA_path: str
+    :param output_dir: Path to output directory for files and logs.
+    :type output_dir: str
+    :param source: Source to use within Ensembl GTF (ie Havanna)
+    :type source: str
+    :param seqid_path: Path to seqid dictionary which maps contigs in the FASTA to their identity in the GTF, defaults to None
+    :type seqid_path: str, optional
+    :param seqid_key: Key to use for mapping between contigs and GTF seqids, should match those in seqid_path file, defaults to None
+    :type seqid_key: str, optional
+    :param seqid_value: Value to use for mapping between contigs and GTF seqids, should match those in seqid_path file, defaults to None
+    :type seqid_value: str, optional
+    :raises Exception: Exception if an input path does not exist.
+    """
+
     # setup logging
     logger = logging.getLogger(__name__)
     logger.info("Beginning database build.")
@@ -413,6 +549,20 @@ def gtf_to_uorf_db(
             logger.error(f"Input path {path} does not exist!")
             raise Exception(f"Path {path} does not exist!")
     logger.debug("All input paths exist.")
+
+    ######################
+    # GET BUILD METADATA #
+    ######################
+
+    # create database build metadata
+    md5_dict = {
+        "gtf_path": gtf_path,
+        "FASTA_path": FASTA_path,
+        "seqid_path": seqid_path,
+    }
+    logger.debug(f"Creating metadata dataframe with inputs: {md5_dict}.")
+
+    metadata_df = create_metadata_df(md5_dict)
 
     ###############
     # DATA IMPORT #
@@ -501,6 +651,7 @@ def gtf_to_uorf_db(
 
     # bool: determine if we have a new or old 5'UTR annotation format
     new_utr_format = "five_prime_utr" in ensg_df.feature.values
+    logger.debug(f"Input GTF file uses new 5'UTR annotation format: {new_utr_format}.")
 
     if new_utr_format:
         # ensembl dataframe is newer format which delimits 5'UTR
@@ -729,54 +880,26 @@ def gtf_to_uorf_db(
     # 2. UTR exon table
     # 3. uORF table
 
-    # transcript table
-    transcript_df
-    logger.debug(f"Saving transcript table with columns: {transcript_df.columns}.")
-
-    # exon table
-    exons.drop(columns=["attribute"], inplace=True)
-    logger.debug(f"Saving exons table with columns: {exons.columns}.")
-
-    # uorf table
-    uorf_table
-    logger.debug(f"Saving uORFs table with columns: {uorf_table.columns}.")
-
-    # cds_df
-    first_cds.drop(columns=["seqname", "end"], inplace=True)
-    logger.debug(f"Saving CDS table with columns: {first_cds.columns}.")
-
     # rename columns in utr_df
     utr_df.rename(columns={"seqname": "chrom"}, inplace=True)
 
-    # force dtypes in UTR_df
-    utr_df.loc[:, "exon"] = utr_df.exon.astype(int)
-
-    # set explicit output cols for SQL db
-    utr_cols = [
-        "transcript",
-        "exon",
-        "length",
-        "rel_start",
-        "rel_stop",
-        "start",
-        "end",
-        "chrom",
-        "frame_state",
-        "FASTA",
-    ]
-    utr_df = utr_df[utr_cols]
-    logger.debug(f"Saving UTR table with columns: {utr_df.columns}.")
-
-    # create database
-    logger.info("Writing output to SQL database.")
+    # unpack exon ID
+    exons["exon_id"] = (
+        exons.attribute.str.split(";").str[7].str.split(" ").str[2].str.strip('"')
+    )
 
     db_path = os.path.join(output_dir, "uorfs.db")
-    conn = sqlite3.connect(db_path)
-    transcript_df.to_sql("transcripts", conn, if_exists="replace", index=False)
-    utr_df.to_sql("utr", conn, if_exists="replace", index=False)
-    uorf_table.to_sql("uorfs", conn, if_exists="replace", index=False)
-    first_cds.to_sql("cds", conn, if_exists="replace", index=False)
+    write_to_db(
+        dataframes={
+            "transcripts": transcript_df,
+            "utr": utr_df,
+            "uorfs": uorf_table,
+            "cds": first_cds,
+            "exons": exons,
+            "build_data": metadata_df,
+        },
+        db_path=db_path,
+    )
 
-    conn.close()
     logger.info(f"Database saved to {db_path}.")
     print(f"Database saved to {db_path}")

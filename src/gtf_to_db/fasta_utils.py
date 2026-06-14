@@ -17,6 +17,8 @@ __all__ = [
     "parse_contigs_from_fasta",
 ]
 
+logger = logging.getLogger(__name__)
+
 
 def complement_function(input_FASTA: str) -> str:
     """This function translates negative strand nucleotides into their complements,
@@ -47,7 +49,6 @@ def get_transcript_FASTA(ensg_df):
     :rtype: pandas.DataFrame
     """
 
-    logger = logging.getLogger(__name__)
     logger.info("Retrieving transcript FASTA.")
 
     if len(ensg_df.groupby("transcript").strand.nunique().unique()) > 1:
@@ -99,13 +100,20 @@ def produce_seqid_dict(seqid_map, key, value):
     :param value: Column to use as value in the seqid mapping. Should match FASTA seqid.
     :type value: str
     """
-    logger = logging.getLogger(__name__)
+
     logger.info("Generating a map of contig identifiers.")
     return seqid_map.set_index(key)[value].to_dict()
 
 
 def fasta_from_stdout(fasta):
-    """Yield (index, sequence) pairs - each sequence isolated"""
+    """Unpack bedtools stdout to FASTA
+
+    :param fasta: subprocess stdout stream
+    :type fasta: str
+    :yield: (index, sequence) pairs unpacked from stdout
+    :rtype: tuple
+    """
+
     current_index = None
     current_sequence = ""
 
@@ -141,7 +149,6 @@ def get_seq(BED_df, FASTA_path, working_dir, seqid_dict=None):
     :rtype: Pandas Dataframe
     """
 
-    logger = logging.getLogger(__name__)
     logger.info("Retrieving FASTA sequence using input BED file.")
 
     if seqid_dict:
@@ -205,7 +212,6 @@ def get_seq(BED_df, FASTA_path, working_dir, seqid_dict=None):
 
 
 def make_bed(ensg_df):
-    logger = logging.getLogger(__name__)
     logger.info("Converting input dataframe to BED format.")
 
     # make BED-compatable dataframe
@@ -224,8 +230,6 @@ def make_bed(ensg_df):
 def gtf_to_sequence(
     input_df, FASTA_path, output_dir, seqid_path, seqid_key, seqid_value
 ):
-    logger = logging.getLogger(__name__)
-
     if input_df.empty:
         logger.error(
             "Could not retrieve FASTA sequence. Dataframe used for gtf_to_sequence call is empty!"
@@ -282,7 +286,6 @@ def gtf_to_sequence(
 
 
 def generate_bed_failure_report(chrom_array, FASTA_path, seqid_dict):
-    logger = logging.getLogger(__name__)
     logger.error("Generating debugging report for FASTA chromosomes.")
 
     # write chrom_array

@@ -1,0 +1,379 @@
+{
+  "database": "uorfs.db",
+  "description": "SURF-A database containing uORF annotations.",
+  "tables": [
+    {
+      "name": "transcripts",
+      "description": "One row per transcript parsed from the input GTF.",
+      "columns": [
+        {
+          "name": "transcript",
+          "type": "TEXT",
+          "nullable": false,
+          "primary_key": true,
+          "description": "Transcript ID, including version number, eg ENST00000405005.8."
+        },
+        {
+          "name": "strand",
+          "type": "TEXT",
+          "nullable": false,
+          "description": "Whether strand is + or -."
+        },
+        {
+          "name": "chrom",
+          "type": "TEXT",
+          "nullable": false,
+          "description": "Chromosome name, e.g. chr1."
+        },
+        {
+          "name": "gene_id",
+          "type": "TEXT",
+          "nullable": false,
+          "description": "Gene ID, including version number, eg ENSG00000157168.22."
+        },
+        {
+          "name": "transcript_FASTA",
+          "type": "TEXT",
+          "nullable": false,
+          "description": "The mRNA FASTA sequence for the transcript's 5' noncoding exons."
+        },
+        {
+          "name": "gene_name",
+          "type": "TEXT",
+          "nullable": false,
+          "description": "Gene symbol."
+        },
+        {
+          "name": "length",
+          "type": "INTEGER",
+          "nullable": false,
+          "description": "Number of nucleotides in the transcript FASTA."
+        },
+        {
+          "name": "utr_len",
+          "type": "INTEGER",
+          "nullable": false,
+          "description": "Number of nucleotides in the transcript FASTA."
+        },
+        {
+          "name": "uorf_count",
+          "type": "INTEGER",
+          "nullable": false,
+          "description": "Number of uORFs identified in the 5'UTR."
+        }
+      ]
+    },
+    {
+      "name": "uorfs",
+      "description": "Upstream open reading frames identified within each 5' UTR.",
+      "columns": [
+        {
+          "name": "transcript",
+          "type": "TEXT",
+          "nullable": false,
+          "primary_key": false,
+          "description": "Transcript ID, including version number, eg ENST00000405005.8."
+        },
+        {
+          "name": "uorf_length",
+          "type": "TEXT",
+          "nullable": false,
+          "primary_key": false,
+          "description": "Length of the uORF, in nucleotides."
+        },
+        {
+          "name": "rel_start_pos",
+          "type": "TEXT",
+          "nullable": false,
+          "primary_key": false,
+          "description": "The index within the 5'UTR's raw FASTA sequence where the uORF begins."
+        },
+        {
+          "name": "rel_stop_pos",
+          "type": "TEXT",
+          "nullable": false,
+          "primary_key": false,
+          "description": "The index within the 5'UTR's raw FASTA sequence where the uORF ends."
+        },
+        {
+          "name": "uORF_FASTA",
+          "type": "TEXT",
+          "nullable": false,
+          "primary_key": false,
+          "description": "The mRNA FASTA sequence of the uORF region."
+        },
+        {
+          "name": "start_codon",
+          "type": "TEXT",
+          "nullable": false,
+          "primary_key": false,
+          "description": "The start codon of the region, ie AUG."
+        },
+        {
+          "name": "stop_codon",
+          "type": "TEXT",
+          "nullable": false,
+          "primary_key": false,
+          "description": "The stop codon of the region, ie UGA. If the uORF reads into the CDS, a `NO_UTR_STOP` label is applied."
+        },
+        {
+          "name": "frame",
+          "type": "TEXT",
+          "nullable": false,
+          "primary_key": false,
+          "description": "The reading frame of the uORF: 0, 1, or 2 to indicate the index of the 5'UTR FASTA sequence where the reading frame begins."
+        },
+        {
+          "name": "uorf_location",
+          "type": "TEXT",
+          "nullable": false,
+          "primary_key": false,
+          "description": "Whether the uORF is contained entirely within the 5'UTR or overlaps the CDS."
+        },
+        {
+          "name": "CDS_frame_status",
+          "type": "TEXT",
+          "nullable": false,
+          "primary_key": false,
+          "description": "Whether the uORF is in the same reading frame as the transcript's CDS start codon."
+        },
+        {
+          "name": "uorf_id",
+          "type": "TEXT",
+          "nullable": false,
+          "primary_key": true,
+          "description": "Unique ID of the uORF."
+        }
+      ]
+    },
+    {
+      "name": "cds",
+      "description": "Information on the initial coding sequence, if present, in 5'UTR exons.",
+      "columns": [
+        {
+          "name": "transcript",
+          "type": "TEXT",
+          "nullable": false,
+          "primary_key": true,
+          "description": "Transcript ID, including version number, eg ENST00000405005.8."
+        },
+        {
+          "name": "exon",
+          "type": "INTEGER",
+          "nullable": false,
+          "primary_key": false,
+          "description": "Transcript number which contains the CDS start codon and sequence."
+        },
+        {
+          "name": "length",
+          "type": "INTEGER",
+          "nullable": false,
+          "primary_key": false,
+          "description": "Number of nucleotides in the CDS."
+        },
+        {
+          "name": "start",
+          "type": "INTEGER",
+          "nullable": false,
+          "primary_key": false,
+          "description": "Genomic start coordinate of the CDS."
+        },
+        {
+          "name": "end",
+          "type": "INTEGER",
+          "nullable": false,
+          "primary_key": false,
+          "description": "Genomic end coordinate of the first CDS-containing exon."
+        },
+        {
+          "name": "FASTA",
+          "type": "TEXT",
+          "nullable": false,
+          "primary_key": false,
+          "description": "DNA FASTA sequence of the CDS."
+        },
+        {
+          "name": "rel_start",
+          "type": "INTEGER",
+          "nullable": false,
+          "primary_key": false,
+          "description": "Index of the CDS start site within the exon FASTA sequence."
+        },
+        {
+          "name": "rel_stop",
+          "type": "INTEGER",
+          "nullable": false,
+          "primary_key": false,
+          "description": "End of the 5'UTR exon sequence."
+        }
+      ]
+    },
+    {
+      "name": "exons",
+      "description": "Information on any exons containing a UTR sequence.",
+      "columns": [
+
+        {
+          "name": "exon_id",
+          "type": "TEXT",
+          "nullable": false,
+          "primary_key": true,
+          "description": "Exon ID, including version number, eg ENSE00001427522.2."
+        },        
+        {
+          "name": "transcript",
+          "type": "TEXT",
+          "nullable": false,
+          "primary_key": false,
+          "description": "Transcript ID, including version number, eg ENST00000405005.8."
+        },
+        {
+          "name": "start",
+          "type": "INTEGER",
+          "nullable": false,
+          "primary_key": false,
+          "description": "Genomic coordinates of the exon start site from the input GTF."
+        },
+        {
+          "name": "end",
+          "type": "INTEGER",
+          "nullable": false,
+          "primary_key": false,
+          "description": "Genomic coordinates of the exon end site from the input GTF."
+        },
+        {
+          "name": "exon",
+          "type": "INTEGER",
+          "nullable": false,
+          "primary_key": false,
+          "description": "Exon number."
+        },
+        {
+          "name": "length",
+          "type": "INTEGER",
+          "nullable": false,
+          "primary_key": false,
+          "description": "Length of the exon in base pairs."
+        },
+        {
+          "name": "rel_start",
+          "type": "INTEGER",
+          "nullable": false,
+          "primary_key": false,
+          "description": "Index of the exon start position within the overall FASTA sequence."
+        },
+        {
+          "name": "rel_end",
+          "type": "INTEGER",
+          "nullable": false,
+          "primary_key": false,
+          "description": "Index of the exon stop position within the overall FASTA sequence."
+        }
+      ]
+    },
+    {
+      "name": "utr",
+      "description": "Information on the parent 5'UTR UTR sequences used to annotate uORFs.",
+      "columns": [
+        {
+          "name": "transcript",
+          "type": "TEXT",
+          "nullable": false,
+          "primary_key": false,
+          "description": "Transcript ID, including version number, eg ENST00000405005.8."
+        },
+        {
+          "name": "exon",
+          "type": "INTEGER",
+          "nullable": false,
+          "primary_key": false,
+          "description": "Exon number of 5'UTR sequence."
+        },
+        {
+          "name": "length",
+          "type": "INTEGER",
+          "nullable": false,
+          "primary_key": false,
+          "description": "Length of the 5'UTR sequence."
+        },
+        {
+          "name": "rel_start",
+          "type": "INTEGER",
+          "nullable": false,
+          "primary_key": false,
+          "description": "Index position within the 5'UTR FASTA sequence where this particular exon begins."
+        },
+        {
+          "name": "rel_stop",
+          "type": "INTEGER",
+          "nullable": false,
+          "primary_key": false,
+          "description": "Index position within the 5'UTR FASTA sequence where this particular exon ends."
+        },
+        {
+          "name": "start",
+          "type": "INTEGER",
+          "nullable": false,
+          "primary_key": false,
+          "description": "Genomic start position of the UTR, imported from the input GTF file."
+        },
+        {
+          "name": "end",
+          "type": "INTEGER",
+          "nullable": false,
+          "primary_key": false,
+          "description": "Genomic end position of the UTR, imported from the input GTF file."
+        },
+        {
+          "name": "chrom",
+          "type": "TEXT",
+          "nullable": false,
+          "primary_key": false,
+          "description": "Chromosome name, e.g. chr1."
+        },
+        {
+          "name": "frame_state",
+          "type": "INTEGER",
+          "nullable": false,
+          "primary_key": false,
+          "description": "Index position of the CDS start (0, 1, or 2). Used to determine whether uORFs are in-frame or out of frame with the CDS start."
+        },
+        {
+          "name": "FASTA",
+          "type": "TEXT",
+          "nullable": false,
+          "primary_key": false,
+          "description": "DNA FASTA sequence of the 5'UTR."
+        }
+      ]
+    },
+
+    {
+      "name": "build_data",
+      "description": "Information on the build inputs for the database.",
+      "columns": [
+        {
+          "name": "input",
+          "type": "TEXT",
+          "nullable": false,
+          "primary_key": true,
+          "description": "Name of input parameter (ie FASTA_path)."
+        },
+        {
+          "name": "path",
+          "type": "TEXT",
+          "nullable": true,
+          "primary_key": false,
+          "description": "Path to input file."
+        },
+        {
+          "name": "md5sum",
+          "type": "TEXT",
+          "nullable": true,
+          "primary_key": false,
+          "description": "md5sum of input file."
+        }
+      ]
+    }
+  ]
+}

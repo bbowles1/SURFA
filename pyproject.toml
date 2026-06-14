@@ -8,6 +8,7 @@ dependencies = [
     "flask>=3.1.0",
     "numpy>=2.2.3",
     "pandas>=2.2.3,<3.0.0",
+    "pymdown-extensions>=10.21.3",
 ]
 
 [build-system]
@@ -17,7 +18,13 @@ build-backend = "setuptools.build_meta"
 [tool.setuptools.packages.find]
 where = ["src"]
 
+[tool.setuptools.package-data]
+gtf_to_db = ["*.json"]
+
 [dependency-groups]
 dev = [
+    "mdformat>=1.0.0",
+    "mkdocstrings-python>=2.0.4",
     "ruff>=0.13.3",
+    "zensical>=0.0.44",
 ]
