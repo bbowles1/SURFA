@@ -74,7 +74,7 @@ def load_schema() -> dict:
     :return: Schema json
     :rtype: dict
     """
-    schema_path = files("gtf_to_db").joinpath("schema.json")
+    schema_path = files("surfa").joinpath("schema.json")
     logger.debug(f"Loading schema from path {schema_path}.")
 
     schema_text = schema_path.read_text()
