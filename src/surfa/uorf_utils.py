@@ -4,8 +4,8 @@ import numpy as np
 import os
 import math
 import re
-from gtf_to_db.fasta_utils import gtf_to_sequence, get_transcript_FASTA
-from gtf_to_db.db_utils import write_to_db, create_metadata_df
+from surfa.fasta_utils import gtf_to_sequence, get_transcript_FASTA
+from surfa.db_utils import write_to_db, create_metadata_df
 
 
 __all__ = [

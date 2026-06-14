@@ -1,11 +1,16 @@
 # SURF-A
 
-Small Upstream Reading Frame Annotation (SURF-A) is a Python-based tool to identify open reading frames in 5'UTR sequences.
+Small Upstream Reading Frame Annotation (SURF-A) is a Python-based library to identify open reading frames in 5'UTR sequences.
 
 
 ## Installation
 
-Use the provided pyproject.toml to install the SURF-A tool to your local environment.
+Use the provided `pyproject.toml` to install SURF-A to your local environment.
+
+1. Install UV if you have not.
+2. `uv venv --python 3.13` creates a new virtual environment.
+2. `uv pip install -e .` installs surf-a into the new venv.
+3. `source .venv/bin/activate` activates the new venv.
 
 
 ## Usage
@@ -17,6 +22,6 @@ Use the provided pyproject.toml to install the SURF-A tool to your local environ
 Docs coming soon.
 
 
-# Docker
+## Docker
 
 The attached Dockerfile can be used to build a SURF-A compatible Docker locally.

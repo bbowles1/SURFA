@@ -11,9 +11,9 @@ run tests
 import unittest
 
 # custom imports
-from gtf_to_db.fasta_utils import complement_function
-from gtf_to_db.uorf_utils import import_reference
-from gtf_to_db.json_converter import query_uorf_db
+from surfa.fasta_utils import complement_function
+from surfa.uorf_utils import import_reference
+from surfa.json_converter import query_uorf_db
 
 db_path = '/app/tests/uorfs.db'
 

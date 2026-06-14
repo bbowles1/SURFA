@@ -1,7 +1,7 @@
 [project]
-name = "uorf-viewer"
+name = "surfa"
 version = "0.1.0"
-description = "Interactive browser for upstream open reading frames."
+description = "Library for calling upstream open reading frames from sequence data."
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
@@ -11,15 +11,18 @@ dependencies = [
     "pymdown-extensions>=10.21.3",
 ]
 
+[project.scripts]
+surfa = "surfa.cli:main"
+
 [build-system]
-requires = ["setuptools>=45", "wheel"]
+requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
 where = ["src"]
 
 [tool.setuptools.package-data]
-gtf_to_db = ["*.json"]
+surfa = ["*.json"]
 
 [dependency-groups]
 dev = [
