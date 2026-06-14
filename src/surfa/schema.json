@@ -212,14 +212,13 @@
       "name": "exons",
       "description": "Information on any exons containing a UTR sequence.",
       "columns": [
-
         {
           "name": "exon_id",
           "type": "TEXT",
           "nullable": false,
           "primary_key": true,
           "description": "Exon ID, including version number, eg ENSE00001427522.2."
-        },        
+        },
         {
           "name": "transcript",
           "type": "TEXT",
@@ -347,7 +346,6 @@
         }
       ]
     },
-
     {
       "name": "build_data",
       "description": "Information on the build inputs for the database.",
