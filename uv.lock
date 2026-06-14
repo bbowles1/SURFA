@@ -470,6 +470,41 @@ wheels = [
 ]
 
 [[package]]
+name = "surfa"
+version = "0.1.0"
+source = { editable = "." }
+dependencies = [
+    { name = "flask" },
+    { name = "numpy" },
+    { name = "pandas" },
+    { name = "pymdown-extensions" },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "mdformat" },
+    { name = "mkdocstrings-python" },
+    { name = "ruff" },
+    { name = "zensical" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "flask", specifier = ">=3.1.0" },
+    { name = "numpy", specifier = ">=2.2.3" },
+    { name = "pandas", specifier = ">=2.2.3,<3.0.0" },
+    { name = "pymdown-extensions", specifier = ">=10.21.3" },
+]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "mdformat", specifier = ">=1.0.0" },
+    { name = "mkdocstrings-python", specifier = ">=2.0.4" },
+    { name = "ruff", specifier = ">=0.13.3" },
+    { name = "zensical", specifier = ">=0.0.44" },
+]
+
+[[package]]
 name = "tomli"
 version = "2.4.1"
 source = { registry = "https://pypi.org/simple" }
@@ -512,41 +547,6 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/43/0f/fa4723f22942480be4ca9527bbde8d43f6c3f2fe8412f00e7f5f6746bc8b/tzdata-2025.1.tar.gz", hash = "sha256:24894909e88cdb28bd1636c6887801df64cb485bd593f2fd83ef29075a81d694", size = 194950, upload-time = "2025-01-21T19:49:38.686Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/0f/dd/84f10e23edd882c6f968c21c2434fe67bd4a528967067515feca9e611e5e/tzdata-2025.1-py2.py3-none-any.whl", hash = "sha256:7e127113816800496f027041c570f50bcd464a020098a3b6b199517772303639", size = 346762, upload-time = "2025-01-21T19:49:37.187Z" },
-]
-
-[[package]]
-name = "uorf-viewer"
-version = "0.1.0"
-source = { editable = "." }
-dependencies = [
-    { name = "flask" },
-    { name = "numpy" },
-    { name = "pandas" },
-    { name = "pymdown-extensions" },
-]
-
-[package.dev-dependencies]
-dev = [
-    { name = "mdformat" },
-    { name = "mkdocstrings-python" },
-    { name = "ruff" },
-    { name = "zensical" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "flask", specifier = ">=3.1.0" },
-    { name = "numpy", specifier = ">=2.2.3" },
-    { name = "pandas", specifier = ">=2.2.3,<3.0.0" },
-    { name = "pymdown-extensions", specifier = ">=10.21.3" },
-]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "mdformat", specifier = ">=1.0.0" },
-    { name = "mkdocstrings-python", specifier = ">=2.0.4" },
-    { name = "ruff", specifier = ">=0.13.3" },
-    { name = "zensical", specifier = ">=0.0.44" },
 ]
 
 [[package]]
