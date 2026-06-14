@@ -14,6 +14,11 @@ erDiagram
   transcripts ||--o{ exons : "transcript"
   transcripts ||--o| cds : "transcript"
 
+  build_data {
+    TEXT input PK
+    TEXT path
+    TEXT md5sum
+  }
   transcripts {
     TEXT transcript PK
     TEXT strand
@@ -27,7 +32,7 @@ erDiagram
   }
   uorfs {
     TEXT uorf_id PK
-    TEXT transcript FK
+    TEXT transcript
     TEXT uorf_length
     TEXT rel_start_pos
     TEXT rel_stop_pos
@@ -52,7 +57,7 @@ erDiagram
   }
   exons {
     TEXT exon_id PK
-    TEXT transcript FK
+    TEXT transcript
     INTEGER start
     INTEGER end
     INTEGER exon
@@ -154,3 +159,14 @@ The first CDS-containing exon for each transcript, used as the reference for uOR
 | `FASTA` | TEXT | No | DNA sequence of the CDS. |
 | `rel_start` | INTEGER | No | Index of the CDS start site within the exon FASTA. |
 | `rel_stop` | INTEGER | No | End of the 5' UTR exon sequence. |
+
+
+### `build_data`
+
+Metadata on the input files used to call uORFs.
+
+| Column | Type | Nullable | Description |
+|---|---|---|---|
+| `input` | TEXT | No | Name of input parameter (ie FASTA_path). |
+| `path` | TEXT | Yes | Path to input file. |
+| `md5sum` | TEXT | Yes | md5sum of input file. |
