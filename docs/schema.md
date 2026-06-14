@@ -1,4 +1,6 @@
-______________________________________________________________________
+---
+icon: lucide/database-search
+---
 
 ## icon: lucide/folder-kanban
 
