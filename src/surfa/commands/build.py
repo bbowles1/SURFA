@@ -32,16 +32,17 @@ logger = logging.getLogger(__name__)
 #########
 
 
-def register(subparsers: argparse._SubParsersAction) -> None:  # noqa: SLF001
+def register(subparsers, parents=None) -> None:
     """Attach the `build` subcommand to *subparsers*.
 
     :param subparsers: _description_
     :type subparsers: argparse._SubParsersAction
     """
 
-    parser: argparse.ArgumentParser = subparsers.add_parser(
+    parser = subparsers.add_parser(
         "build",
-        help="Build a sqilite database of uORF calls from an input FASTA and GTF sequence.",
+        parents=parents or [],
+        help="Build a sqlite database of uORF calls from an input FASTA and GTF sequence.",
         description=(
             """
             Provide an input Ensembl GTF and FASTA sequence file

@@ -21,15 +21,16 @@ logger = logging.getLogger(__name__)
 #########
 
 
-def register(subparsers: argparse._SubParsersAction) -> None:  # noqa: SLF001
+def register(subparsers, parents=None) -> None:
     """Attach the `query` subcommand to *subparsers*.
 
     :param subparsers: _description_
     :type subparsers: argparse._SubParsersAction
     """
 
-    parser: argparse.ArgumentParser = subparsers.add_parser(
+    parser = subparsers.add_parser(
         "query",
+        parents=parents or [],
         help="Export a JSON given a target uORF sequence.",
         description=("Export a target uORF as a JSON."),
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,

@@ -25,41 +25,43 @@ def make_parser() -> argparse.ArgumentParser:
     :rtype: argparse.ArgumentParser
     """
 
-    parser = argparse.ArgumentParser(
-        prog="surfa",
-        description="Surfa Library: identify upstream open reading frames in sequence data.",
-        epilog="Run `surfa <command> --help` for per-command options.",
-    )
-
-    # -- global flags --
-    parser.add_argument(
-        "--version",
-        "-V",
-        action="version",
-        version="%(prog)s 0.1.0",
-    )
-    parser.add_argument(
-        "--log-level",
+    # parent carries shared flags (log-level, log-file)
+    global_parser = argparse.ArgumentParser(add_help=False)
+    global_parser.add_argument(
+        "--log-level", "-l",
         default="INFO",
         choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
         help="Set the logging level.",
     )
-    parser.add_argument(
+    global_parser.add_argument(
         "--log-file",
         metavar="FILE",
         default="surfa.log",
         help="Write logs to this file (default: surfa.log in the current directory).",
     )
 
-    # -- subcommands --
+    # root parser owns the user-facing identity and --version
+    parser = argparse.ArgumentParser(
+        prog="surfa",
+        parents=[global_parser],
+        description="Surfa Library: identify upstream open reading frames in sequence data.",
+        epilog="Run `surfa <command> --help` for per-command options.",
+    )
+    parser.add_argument(
+        "--version", "-V",
+        action="version",
+        version="%(prog)s 0.1.0",
+    )
+
+    # subcommands
     subparsers = parser.add_subparsers(
         title="commands",
         metavar="<command>",
         dest="command",
     )
 
-    build.register(subparsers)
-    query.register(subparsers)
+    build.register(subparsers, parents=[global_parser])
+    query.register(subparsers, parents=[global_parser])
 
     return parser
 
