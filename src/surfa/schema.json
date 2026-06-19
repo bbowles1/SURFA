@@ -215,8 +215,8 @@
         {
           "name": "exon_id",
           "type": "TEXT",
-          "nullable": false,
-          "primary_key": true,
+          "nullable": true,
+          "primary_key": false,
           "description": "Exon ID, including version number, eg ENSE00001427522.2."
         },
         {
