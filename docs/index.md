@@ -12,203 +12,110 @@ This work is in development and full PyPI hosting is coming soon. This package d
 
 For development, you can install this tool locally using the following steps:
 
-1. Install uv: (https://docs.astral.sh/uv/).
-1. `uv sync` to install all required dependencies.
-1. `source .venv/bin/activate` to activate the environment.
+1. Install bedtools (https://bedtools.readthedocs.io/en/stable/).
+2. Install uv: (https://docs.astral.sh/uv/).
+3. `uv sync` to install all required dependencies.
+4. `source .venv/bin/activate` to activate the environment.
 
-## Usage
+## Inputs
 
 The required inputs for the SURF-A database build are:
 
 - An Ensembl GTF file for your organism of choice.
 - A matching FASTA file (should use the same reference genome as the GTF).
-- A target directory to save files.
 
-Basic database build:
+SURF-A wraps efficient queries using Bedtools and uses the resulting sequences to call uORF regions.
 
-```
-make_uorf_db.py \
-  --gtf "Homo_sapiens.GRCh38.115.gtf.gz" \
-  --fasta  'Homo_sapiens.GRCh38.dna.primary_assembly.fa' \
-  --output-dir "/Users/bbowles/Documents/Code/tmp"
-```
-
-Export a JSON file for your target transcript:
-
-```
-make_json.py \
-    --db uorfs.db \
-    --transcript ENST00000504921.7 \
-    --output uorfs.json
-```
 
 ## Commands
 
-- [`zensical new`][new] - Create a new project
-
-- [`zensical serve`][serve] - Start local web server
-
-- [`zensical build`][build] - Build your site
-
-## Examples
-
-### Admonitions
-
-> Go to [documentation](https://zensical.org/docs/authoring/admonitions/)
-
-!!! note
+#### Build 
 
 ```
-This is a **note** admonition. Use it to provide helpful information.
+surfa build --gtf "/Users/bbowles/Documents/Code/refdata/ensembl/Homo_sapiens.GRCh38.115.gtf.gz" \
+    --fasta  '/Users/bbowles/Documents/Code/refdata/FASTA/GRCh38/Homo_sapiens.GRCh38.dna.primary_assembly.fa' \
+    --output-dir "/Users/bbowles/Documents/Code/GitHub/Upstream-Display/data/" \
+    --ensembl-source "ensembl_havana" \
+    --log-level DEBUG
 ```
 
-!!! warning
+
+Query
+
+
+
+
+
+
+
+
+
+## Usage
 
 ```
-This is a **warning** admonition. Be careful!
+surfa <command> [options]
 ```
 
-### Details
+### Global Options
 
-> Go to [documentation](https://zensical.org/docs/authoring/admonitions/#collapsible-blocks)
+| Option | Description |
+|--------|-------------|
+| -V, --version	| Show program version and exit |
+| -l, --log-level LEVEL| Set logging level: DEBUG, INFO, WARNING, ERROR, CRITICAL (default: INFO) |
+| --log-file FILE | Write logs to specified file (default: surfa.log) |
 
-??? info "Click to expand for more info"
+### Commands
+
+#### build
+
+Build a SQLite database of uORF calls from an input FASTA and GTF sequence.
+
+Note: Specific build options are available via `surfa build --help.`
 
 ```
-This content is hidden until you click to expand it.
-Great for FAQs or long explanations.
+surfa build --gtf <gtf-file> --fasta <fasta-file> --output-dir <directory> [options]
 ```
 
-## Code Blocks
+**Required Arguments**
 
-> Go to [documentation](https://zensical.org/docs/authoring/code-blocks/)
+| Argument | Description |
+|----------|-------------|
+| --gtf <FILE>	Path to Ensembl-format GTF file
+| --fasta <FILE>	Path to input FASTA file
+| --output-dir <DIR>	Output directory for generated files
 
-```python hl_lines="2" title="Code blocks"
-def greet(name):
-    print(f"Hello, {name}!") # (1)!
+**Optional Arguments**
 
-greet("Python")
+| Argument | Description |
+|----------|-------------|
+| --ensembl-source <SOURCE>	| Which Ensembl GTF data source to use (default: ensembl_havana). |
+| --seqid-map <FILE>	| Dictionary file mapping GenBank/RefSeq identifiers |
+| --seqid-key <COLUMN>	| Column key in seqid_map for GTF chromosome identifiers |
+| --seqid-value <COLUMN> | Column in seqid_map containing remapped values |
+
+**Example Build**
+
+```
+surfa build \
+    --gtf genes.gtf \
+    --fasta sequences.fasta \
+    --output-dir ./uorf_database \
+    --ensembl-source ensembl
 ```
 
-1. > Go to [documentation](https://zensical.org/docs/authoring/code-blocks/#code-annotations)
 
-   Code annotations allow to attach notes to lines of code.
+#### query
 
-Code can also be highlighted inline: `#!python print("Hello, Python!")`.
+Query the uORF database for specific annotations.
 
-## Content tabs
+Note: Specific query options are available via `surfa query --help.`
 
-> Go to [documentation](https://zensical.org/docs/authoring/content-tabs/)
+Examples
 
-=== "Python"
+Basic uORF Database Construction
 
-````
-``` python
-print("Hello from Python!")
-```
-````
-
-=== "Rust"
-
-````
-``` rs
-println!("Hello from Rust!");
-```
-````
-
-## Diagrams
-
-> Go to [documentation](https://zensical.org/docs/authoring/diagrams/)
-
-```mermaid
-graph LR
-  A[Start] --> B{Error?};
-  B -->|Yes| C[Hmm...];
-  C --> D[Debug];
-  D --> B;
-  B ---->|No| E[Yay!];
-```
-
-## Footnotes
-
-> Go to [documentation](https://zensical.org/docs/authoring/footnotes/)
-
-## Formatting
-
-> Go to [documentation](https://zensical.org/docs/authoring/formatting/)
-
-- ==This was marked (highlight)==
-- ^^This was inserted (underline)^^
-- ~~This was deleted (strikethrough)~~
-- H~2~O
-- A^T^A
-- ++ctrl+alt+del++
-
-## Icons, Emojis
-
-> Go to [documentation](https://zensical.org/docs/authoring/icons-emojis/)
-
-- :sparkles: `:sparkles:`
-- :rocket: `:rocket:`
-- :tada: `:tada:`
-- :memo: `:memo:`
-- :eyes: `:eyes:`
-
-## Maths
-
-> Go to [documentation](https://zensical.org/docs/authoring/math/)
-
-$$
-\\cos x=\\sum\_{k=0}^{\\infty}\\frac{(-1)^k}{(2k)!}x^{2k}
-$$
-
-!!! warning "Needs configuration"
-Note that MathJax is included via a `script` tag on this page and is not
-configured in the generated default configuration to avoid including it
-in a pages that do not need it. See the documentation for details on how
-to configure it on all your pages if they are more Maths-heavy than these
-simple starter pages.
-
-<script id="MathJax-script" src="https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js"></script>
-
-<script>
-  window.MathJax = {
-    tex: {
-      inlineMath: [["\\(", "\\)"]],
-      displayMath: [["\\[", "\\]"]],
-      processEscapes: true,
-      processEnvironments: true
-    },
-    options: {
-      ignoreHtmlClass: ".*|",
-      processHtmlClass: "arithmatex"
-    }
-  };
-
-  document$.subscribe(() => {
-    MathJax.startup.output.clearCache()
-    MathJax.typesetClear()
-    MathJax.texReset()
-    MathJax.typesetPromise()
-  })
-</script>
-
-## Task Lists
-
-> Go to [documentation](https://zensical.org/docs/authoring/lists/#using-task-lists)
-
-- [x] Install Zensical
-- [x] Configure `zensical.toml`
-- [x] Write amazing documentation
-- [ ] Deploy anywhere
-
-## Tooltips
-
-> Go to [documentation](https://zensical.org/docs/authoring/tooltips/)
-
-[Hover me][example]
-
-[build]: https://zensical.org/docs/usage/build/
-[example]: https://example.com "I'm a tooltip!"
-[new]: https://zensical.org/docs/usage/new/
-[serve]: https://zensical.org/docs/usage/preview/
+| Argument | Description |
+|----------|-------------|
+| --db <FILE> | Path to uorfs.db (created using surfa build command). |
+| --transcript <STR> | Target transcript (including version number). |
+| --output | Output file name (incl JSON extension). Defaults to `query.json` |
