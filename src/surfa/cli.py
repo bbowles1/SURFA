@@ -28,7 +28,8 @@ def make_parser() -> argparse.ArgumentParser:
     # parent carries shared flags (log-level, log-file)
     global_parser = argparse.ArgumentParser(add_help=False)
     global_parser.add_argument(
-        "--log-level", "-l",
+        "--log-level",
+        "-l",
         default="INFO",
         choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
         help="Set the logging level.",
@@ -48,7 +49,8 @@ def make_parser() -> argparse.ArgumentParser:
         epilog="Run `surfa <command> --help` for per-command options.",
     )
     parser.add_argument(
-        "--version", "-V",
+        "--version",
+        "-V",
         action="version",
         version="%(prog)s 0.1.0",
     )

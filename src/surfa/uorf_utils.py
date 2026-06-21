@@ -29,6 +29,7 @@ __all__ = [
 
 logger = logging.getLogger(__name__)
 
+
 def chunker(seq, size):
     # chunk data into n sizes
     return (seq[pos : pos + size] for pos in range(0, len(seq), size))
@@ -365,26 +366,32 @@ def get_field_index(test_string, target):
     # find index of exon number
     pattern = rf"{target}"
     index = next(
-        (i for i, item in enumerate(test_string.split(";")) if re.search(pattern, item)),
+        (
+            i
+            for i, item in enumerate(test_string.split(";"))
+            if re.search(pattern, item)
+        ),
         None,
     )
     if index:
-        logger.debug(f"Identified target string {target} in attributes block with format `{test_string.split(";")[index]}`.")
+        logger.debug(
+            f"Identified target string {target} in attributes block with format `{test_string.split(';')[index]}`."
+        )
         return index
     else:
         logging.error(f"No index field detected for {pattern}!")
         raise Exception(f"No index field detected for {pattern}!")
-    
+
 
 def unpack_attribute_single(attribute: pd.Series, field_name: str) -> pd.Series:
     """
     Vectorized: Extract a single field from GTF attribute strings.
-    
+
     Handles both quoted and unquoted values:
     - exon_number "1";  ->  1
     - exon_number 1;    ->  1
     - exon_id "ENSE00001427522.2";  ->  ENSE00001427522.2
-    
+
     :param attribute: Series of attribute strings from GTF file
     :param field_name: Target field name to extract
     :return: Series of extracted values (NaN if not found)
@@ -398,8 +405,9 @@ def unpack_attribute_single(attribute: pd.Series, field_name: str) -> pd.Series:
     # Key insight: [^";\s]+ stops at "; or whitespace, so it captures the value
     # regardless of whether it's quoted or not
     pattern = rf'\b{re.escape(field_name)}\s+"?([^";\s]+)'
-    
+
     return attribute.str.extract(pattern, expand=False)
+
 
 def unpack_attribute(attribute: pd.Series, field_name: str) -> pd.Series:
     """Vectorize logic for unpack_attribute_single
@@ -411,7 +419,9 @@ def unpack_attribute(attribute: pd.Series, field_name: str) -> pd.Series:
     :return: Series of extracted values (NaN if not found)
     :rtype: pd.Series
     """
-    logger.debug(f"Unpacking {field_name} from input attribute field. Example format={attribute.iloc[0]}.")
+    logger.debug(
+        f"Unpacking {field_name} from input attribute field. Example format={attribute.iloc[0]}."
+    )
     return unpack_attribute_single(attribute, field_name)
 
 
@@ -474,9 +484,10 @@ def unpack_transcript(input_df, df_name):
     )
 
     if separate_transcript_version:
-
         # unpack transcript version
-        return_df["transcript_version"] = unpack_attribute(return_df.attribute, "transcript_version")
+        return_df["transcript_version"] = unpack_attribute(
+            return_df.attribute, "transcript_version"
+        )
 
         logger.debug("Appending transcript number and transcript version.")
         return_df.loc[:, "transcript"] = (
@@ -615,7 +626,7 @@ def gtf_to_uorf_db(
     exons["rel_start"] = exons["rel_end"] - exons["length"]
 
     # unpack exon ID:
-    exons['exon_id'] = unpack_attribute(exons.attribute, 'exon_id')
+    exons["exon_id"] = unpack_attribute(exons.attribute, "exon_id")
 
     ###################
     # 5' UTR FEATURES #
@@ -632,9 +643,6 @@ def gtf_to_uorf_db(
 
         # unpack transcripts
         utr_df = unpack_transcript(utr_df, "UTR")
-
-        # determine indices
-        sample_string = utr_df.attribute.iloc[0]
 
         # manually enumerate exon number
         utr_df.loc[utr_df.strand == "+", "exon"] = (
@@ -660,7 +668,6 @@ def gtf_to_uorf_db(
         utr_df = unpack_transcript(utr_df, "UTR")
 
         utr_df["exon"] = unpack_attribute(utr_df.attribute, "exon_number")
-
 
     utr_df.sort_values(by=["transcript", "exon"], ascending=True, inplace=True)
 
