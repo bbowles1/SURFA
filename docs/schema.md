@@ -58,7 +58,7 @@ erDiagram
     TEXT FASTA
   }
   exons {
-    TEXT exon_id PK
+    TEXT exon_id
     TEXT transcript
     INTEGER start
     INTEGER end
