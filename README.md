@@ -1,3 +1,8 @@
+![Python](https://img.shields.io/badge/Python-3.13+-blue.svg)
+![Status](https://img.shields.io/badge/status-development-yellow.svg)
+![Docker](https://img.shields.io/badge/Docker-Supported-0db7ed.svg)
+![Category](https://img.shields.io/badge/tool-bioinformatics-4caf50.svg)
+
 # SURF-A
 
 SURF-A is a Python utility that allows users to annotate small upstream open reading frames (uORFs) in mRNA sequences. The tool provides a way to build a basic database of uORF sequences from any input set of Ensembl GTF and FASTA files.
