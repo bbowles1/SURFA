@@ -4,8 +4,8 @@ import numpy as np
 import os
 import math
 import re
-from gtf_to_db.fasta_utils import gtf_to_sequence, get_transcript_FASTA
-from gtf_to_db.db_utils import write_to_db, create_metadata_df
+from surfa.fasta_utils import gtf_to_sequence, get_transcript_FASTA
+from surfa.db_utils import write_to_db, create_metadata_df
 
 
 __all__ = [
@@ -19,13 +19,15 @@ __all__ = [
     "return_FASTA_optimized",
     "get_uorfs",
     "import_reference",
-    "get_exon_field_num",
-    "get_transcript_field_num",
-    "get_transcript_version_field_num",
+    "get_field_index",
+    "unpack_attribute_single",
+    "unpack_attribute",
     "check_identity",
     "unpack_transcript",
     "gtf_to_uorf_db",
 ]
+
+logger = logging.getLogger(__name__)
 
 
 def chunker(seq, size):
@@ -182,7 +184,6 @@ def get_uorfs(input_df):
     :rtype: pandas Data.Frame
     """
 
-    logger = logging.getLogger(__name__)
     logger.info("Retrieving uORFs from input dataframe of FASTA sequence.")
 
     # convert input to upper
@@ -350,73 +351,78 @@ def import_reference(path):
     return "".join(sequence)
 
 
-def get_exon_field_num(string):
-    """Find the index of the exon number in a GTF file's attribute column.
+def get_field_index(test_string, target):
+    """Find the index of a target string in a GTF file's attribute column.
 
-    :param string: attribute string from a GTF file.
-    :type string: str
+    :param test_string: attribute string from a GTF file.
+    :type test_string: str
+    :param target: target pattern to use for search
+    :type target: str
     :raises Exception: Could not detect the index for the given string.
-    :return: index of "exon_number" field.
+    :return: index of target field.
     :rtype: int
     """
 
     # find index of exon number
-    pattern = r"exon_number"
+    pattern = rf"{target}"
     index = next(
-        (i for i, item in enumerate(string.split(";")) if re.search(pattern, item)),
+        (
+            i
+            for i, item in enumerate(test_string.split(";"))
+            if re.search(pattern, item)
+        ),
         None,
     )
     if index:
+        logger.debug(
+            f"Identified target string {target} in attributes block with format `{test_string.split(';')[index]}`."
+        )
         return index
     else:
         logging.error(f"No index field detected for {pattern}!")
         raise Exception(f"No index field detected for {pattern}!")
 
 
-def get_transcript_field_num(string):
-    """Find the index of the transcript ID in a GTF file's attribute column.
-
-    :param string: attribute string from a GTF file.
-    :type string: str
-    :raises Exception: Could not detect the index for the given string.
-    :return: index of "transcript_id" field.
-    :rtype: int
+def unpack_attribute_single(attribute: pd.Series, field_name: str) -> pd.Series:
     """
+    Vectorized: Extract a single field from GTF attribute strings.
 
-    # find index of exon number
-    pattern = r"transcript_id"
-    index = next(
-        (i for i, item in enumerate(string.split(";")) if re.search(pattern, item)),
-        None,
-    )
-    if index:
-        return index
-    else:
-        logging.error(f"No index field detected for {pattern}!")
-        raise Exception(f"No index field detected for {pattern}!")
+    Handles both quoted and unquoted values:
+    - exon_number "1";  ->  1
+    - exon_number 1;    ->  1
+    - exon_id "ENSE00001427522.2";  ->  ENSE00001427522.2
 
-
-def get_transcript_version_field_num(string):
-    """Find the index of the transcript version in a GTF file's attribute column.
-
-    :param string: attribute string from a GTF file.
-    :type string: str
-    :raises Exception: Could not detect the index for the given string.
-    :return: index of "transcript_version" field.
-    :rtype: int
+    :param attribute: Series of attribute strings from GTF file
+    :param field_name: Target field name to extract
+    :return: Series of extracted values (NaN if not found)
     """
+    # Pattern explanation:
+    # \b{field_name}\s+   - word boundary, field name, one+ whitespace
+    # "?(?:...)           - optional opening quote (non-capturing)
+    #   [^";\s]+         - capture: one+ chars that aren't quote/semicolon/space
+    # "?.*?               - optional closing quote, non-greedy match rest
+    #
+    # Key insight: [^";\s]+ stops at "; or whitespace, so it captures the value
+    # regardless of whether it's quoted or not
+    pattern = rf'\b{re.escape(field_name)}\s+"?([^";\s]+)'
 
-    # find index of exon number
-    pattern = r"transcript_version"
-    index = next(
-        (i for i, item in enumerate(string.split(";")) if re.search(pattern, item)),
-        None,
+    return attribute.str.extract(pattern, expand=False)
+
+
+def unpack_attribute(attribute: pd.Series, field_name: str) -> pd.Series:
+    """Vectorize logic for unpack_attribute_single
+
+    :param attribute: attribute column from GTF file
+    :type attribute: pd.Series
+    :param field_name: name of target attribute field
+    :type field_name: str
+    :return: Series of extracted values (NaN if not found)
+    :rtype: pd.Series
+    """
+    logger.debug(
+        f"Unpacking {field_name} from input attribute field. Example format={attribute.iloc[0]}."
     )
-    if index:
-        return index
-    else:
-        logging.error(f"No index field detected for {pattern}!")
-        raise Exception(f"No index field detected for {pattern}!")
+    return unpack_attribute_single(attribute, field_name)
 
 
 def check_identity(region_start, strand, CDS_start):
@@ -456,7 +462,6 @@ def unpack_transcript(input_df, df_name):
     :rtype: pd.DataDrame
     """
 
-    logger = logging.getLogger(__name__)
     logger.debug(
         "Checking input dataframe for separate transcript and version definitions."
     )
@@ -470,15 +475,7 @@ def unpack_transcript(input_df, df_name):
     )
 
     # unpack transcript
-    transcript_index = get_transcript_field_num(sample_string)
-    logger.debug(f"Transcript detected in field {transcript_index}.")
-    return_df["transcript"] = (
-        return_df.attribute.str.split(";")
-        .str[transcript_index]
-        .str.split(" ")
-        .str[2]
-        .str.strip('"')
-    )
+    return_df["transcript"] = unpack_attribute(return_df.attribute, "transcript_id")
 
     # determine if separate handling is required to append ENST + version number
     separate_transcript_version = "transcript_version" in input_df.attribute.iloc[0]
@@ -487,14 +484,9 @@ def unpack_transcript(input_df, df_name):
     )
 
     if separate_transcript_version:
-        version_index = get_transcript_version_field_num(sample_string)
-        logger.debug(f"Transcript version number detected in field {version_index}.")
-        return_df["transcript_version"] = (
-            return_df.attribute.str.split(";")
-            .str[version_index]
-            .str.split(" ")
-            .str[2]
-            .str.strip('"')
+        # unpack transcript version
+        return_df["transcript_version"] = unpack_attribute(
+            return_df.attribute, "transcript_version"
         )
 
         logger.debug("Appending transcript number and transcript version.")
@@ -604,19 +596,10 @@ def gtf_to_uorf_db(
     # unpack transcript
     cds = unpack_transcript(cds, "CDS")
 
-    # determine indices
-    sample_string = cds.attribute.iloc[0]
-    exon_index = get_exon_field_num(sample_string)
+    # unpack exon
+    cds["exon"] = unpack_attribute(cds.attribute, "exon_number")
 
-    # unpack fields
-    cds["exon"] = (
-        cds.attribute.str.split(";")
-        .str[exon_index]
-        .str.split(" ")
-        .str[2]
-        .str.strip('"')
-        .astype(int)
-    )
+    # annotate length, sort df
     cds["length"] = cds.end + 1 - cds.start
     cds.sort_values(by=["transcript", "exon"], ascending=True, inplace=True)
 
@@ -634,15 +617,16 @@ def gtf_to_uorf_db(
     # unpack transcripts
     exons = unpack_transcript(exons, "exons")
 
-    # determine indices
-    sample_string = exons.attribute.iloc[0]
-    exon_index = get_exon_field_num(sample_string)
+    # label exon number
+    exons["exon"] = unpack_attribute(exons.attribute, "exon_number")
 
     # create exons table
     exons["length"] = exons.end + 1 - exons.start
-    exons["exon"] = exons.attribute.str.split(";").str[exon_index].str.split(" ").str[2]
     exons["rel_end"] = exons.groupby("transcript")["length"].cumsum()
     exons["rel_start"] = exons["rel_end"] - exons["length"]
+
+    # unpack exon ID:
+    exons["exon_id"] = unpack_attribute(exons.attribute, "exon_id")
 
     ###################
     # 5' UTR FEATURES #
@@ -659,9 +643,6 @@ def gtf_to_uorf_db(
 
         # unpack transcripts
         utr_df = unpack_transcript(utr_df, "UTR")
-
-        # determine indices
-        sample_string = utr_df.attribute.iloc[0]
 
         # manually enumerate exon number
         utr_df.loc[utr_df.strand == "+", "exon"] = (
@@ -686,13 +667,7 @@ def gtf_to_uorf_db(
         # unpack transcripts
         utr_df = unpack_transcript(utr_df, "UTR")
 
-        # determine indices
-        sample_string = utr_df.attribute.iloc[0]
-        exon_index = get_exon_field_num(sample_string)
-
-        utr_df["exon"] = (
-            utr_df.attribute.str.split(";").str[exon_index].str.split(" ").str[2]
-        )
+        utr_df["exon"] = unpack_attribute(utr_df.attribute, "exon_number")
 
     utr_df.sort_values(by=["transcript", "exon"], ascending=True, inplace=True)
 
@@ -882,11 +857,6 @@ def gtf_to_uorf_db(
 
     # rename columns in utr_df
     utr_df.rename(columns={"seqname": "chrom"}, inplace=True)
-
-    # unpack exon ID
-    exons["exon_id"] = (
-        exons.attribute.str.split(";").str[7].str.split(" ").str[2].str.strip('"')
-    )
 
     db_path = os.path.join(output_dir, "uorfs.db")
     write_to_db(

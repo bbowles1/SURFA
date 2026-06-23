@@ -1,6 +1,6 @@
-______________________________________________________________________
-
-## icon: lucide/folder-kanban
+---
+icon: lucide/notebook-pen
+---
 
 # Annotation Guide
 
@@ -47,3 +47,11 @@ SURF-A does not currently call uORFs which would represent N-terminal extensions
 # Missing CDS Definitions
 
 A small number of transcripts lack defined CDS start sites (this can happen, for example, in the case of lncRNA transcripts). These are not supported at this time and are removed from the output database. Future work is planned to support these transcripts.
+
+# Near-Cognate Start Codons
+
+There is evidence from ribosome binding studies which show that near-cognate start codons (those which differ from the canonical AUG sequence by a single nucleotide) can bind ribosomes at lower frequencies than the standard AUG sequence.[^1] Ribosome binding to near-cognate start codons is strongly influenced by the broader Kozak sequence around the start codon but follows an approximate order where CUG has the strongest binding capability, followed by other near-cognate codons such as GUG and UUG.[^2] Given that near-cognate codons may be of interest to researchers, we have included them in the SURF-A output.
+
+[^1]: Jia, L., Mao, Y., Ji, Q., Dersh, D., Yewdell, J.W., and Qian, S.B. (2020). Decoding mRNA translatability and stability from the 5' UTR. Nat Struct Mol Biol 27, 814-821.
+
+[^2]: Diaz de Arce, A.J., Noderer, W.L., and Wang, C.L. (2018). Complete motif analysis of sequence requirements for translation initiation at non-AUG start codons. Nucleic Acids Res 46, 985-994.

@@ -11,10 +11,6 @@ RUN apt-get update && apt-get install -y \
     ca-certificates \
     tar \
     bedtools \
-    # dev dependencies below
-    less \
-    vim \
-    # npm dependencies below
     curl \
     && curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
     && apt-get install -y nodejs \
@@ -27,32 +23,30 @@ ENV UV_COMPILE_BYTECODE=1
 # Copy from the cache instead of linking since it's a mounted volume
 ENV UV_LINK_MODE=copy
 
-# Install the project's dependencies using the lockfile and settings
-# essentially uses uv sync with explicit pyproject, lock files
+# Install dependencies first (without the project itself) for optimal layer caching.
+# Mounts pyproject.toml and uv.lock without copying them into the image at this stage.
 RUN --mount=type=cache,target=/root/.cache/uv \
     --mount=type=bind,source=uv.lock,target=uv.lock \
     --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
     uv sync --frozen --no-install-project --no-dev
 
-# Then, add the rest of the project source code and install it
-# Installing separately from its dependencies allows optimal layer caching
-ADD . /app
+# Copy source and install the project itself.
+# Kept as a separate layer so dependency installation above is only
+# re-run when pyproject.toml / uv.lock change, not on every code edit.
+COPY . /app
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen --no-dev
-
-# install custom project dependencies
-RUN uv pip install --system -e . 
 
 # Place executables in the environment at the front of the path
 ENV PATH="/app/.venv/bin:$PATH"
 
-# make test script(s) executable
+# Make test script(s) executable
 RUN chmod +x tests/build_test_db.sh
 
 # Install NPM dependencies
 RUN npm install
 
-# expose flask port
+# Expose Flask port
 EXPOSE 5000
 
 # Reset the entrypoint, don't invoke `uv`
