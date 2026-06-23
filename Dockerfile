@@ -12,8 +12,6 @@ RUN apt-get update && apt-get install -y \
     tar \
     bedtools \
     curl \
-    && curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
-    && apt-get install -y nodejs \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -42,12 +40,6 @@ ENV PATH="/app/.venv/bin:$PATH"
 
 # Make test script(s) executable
 RUN chmod +x tests/build_test_db.sh
-
-# Install NPM dependencies
-RUN npm install
-
-# Expose Flask port
-EXPOSE 5000
 
 # Reset the entrypoint, don't invoke `uv`
 ENTRYPOINT []
