@@ -138,3 +138,7 @@ surfa query \
     --transcript ENST00000504921.7 \
     --output /data/uorfs.json
 ```
+
+# How to Cite
+
+TBD
