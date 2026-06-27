@@ -142,4 +142,4 @@ surfa query \
 
 # How to Cite
 
-TBD
+Bowles, B. (2026). SURFA: a Python tool for labeling Upstream Open Reading Frames. (Version 1.0.0) [Computer software]. https://doi.org/10.5281/zenodo.1234
