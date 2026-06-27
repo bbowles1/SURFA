@@ -39,7 +39,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 ENV PATH="/app/.venv/bin:$PATH"
 
 # Make test script(s) executable
-RUN chmod +x tests/build_test_db.sh
+RUN chmod +x tests/integration/build_test_db.sh
 
 # Reset the entrypoint, don't invoke `uv`
 ENTRYPOINT []
