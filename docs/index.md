@@ -6,6 +6,7 @@ icon: lucide/flask-conical
 
 SURF-A is a Python utility that allows users to annotate small upstream open reading frames (uORFs) in mRNA sequences. The tool provides a way to build a basic database of uORF sequences from any input set of Ensembl GTF and FASTA files.
 
+
 ## Installation
 
 This work is in development and full PyPI hosting is coming soon. This package depends on a locally available version of Bedtools.
@@ -16,6 +17,9 @@ For development, you can install this tool locally using the following steps:
 2. Install uv: (https://docs.astral.sh/uv/).
 3. `uv sync` to install all required dependencies.
 4. `source .venv/bin/activate` to activate the environment.
+
+Users can also opt to use the Dockerfile within this repo as an alternative to installing SURFA locally.
+
 
 ## Inputs
 
