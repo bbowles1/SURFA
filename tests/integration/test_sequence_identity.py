@@ -22,7 +22,7 @@ class TestSequences(unittest.TestCase):
     # NEW TESTS THAT ARE INFORMATIVE
     def test_mef2c_utr_sequence_identity(self):
         # reference file = mef2c_noncoding_exons.fa
-        mef2c_ref_utr = import_reference("/app/tests/mef2c_utr_mrna_sequence.fa")
+        mef2c_ref_utr = import_reference("/app/tests/data/mef2c_utr_mrna_sequence.fa")
 
         # extract sequences from db
         utr_query = query_uorf_db(db_path, "utr", "ENST00000504921.7")
@@ -40,7 +40,7 @@ class TestSequences(unittest.TestCase):
 
     def test_nrg1_utr_sequence_identity(self):
         # reference file = mef2c_noncoding_exons.fa
-        nrg1_ref_utr = import_reference("/app/tests/nrg1_utr_mrna_sequence.fa")
+        nrg1_ref_utr = import_reference("/app/tests/data/nrg1_utr_mrna_sequence.fa")
 
         # extract sequences from db, no processing necessary
         # because A) NRG1 UTR is entirely within exon 1 and 2) NRG1 is positive standed
@@ -54,7 +54,7 @@ class TestSequences(unittest.TestCase):
         test_transcript = "ENST00000504921.7"
         # len(UTR_exons) + len(CDS) = len(reference)
         mef2c_ref_noncoding_exons_len = len(
-            import_reference("/app/tests/mef2c_noncoding_exons.fa")
+            import_reference("/app/tests/data/mef2c_noncoding_exons.fa")
         )
 
         # retrieve UTR len
@@ -72,7 +72,7 @@ class TestSequences(unittest.TestCase):
         test_transcript = "ENST00000405005.8"
         # len(UTR_exons) + len(CDS) = len(reference)
         nrg1_ref_noncoding_exons_len = len(
-            import_reference("/app/tests/nrg1_noncoding_exons.fa")
+            import_reference("/app/tests/data/nrg1_noncoding_exons.fa")
         )
 
         # retrieve UTR len
