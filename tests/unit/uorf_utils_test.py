@@ -1,28 +1,25 @@
 from surfa.uorf_utils import check_identity, fasta_codon_search
 import unittest
 
-class TestCheckIdentity(unittest.TestCase):
 
+class TestCheckIdentity(unittest.TestCase):
     def test_check_identity(self):
         """
         Parametrized test for check_identity function.
-        
+
         Covers logic for:
         1. Positive strand: 5' is upstream (lower coordinate), 3' is downstream (higher coordinate).
         2. Negative strand: 5' is downstream (higher coordinate), 3' is upstream (lower coordinate).
         """
-        
+
         test_data = [
             # (region_start, strand, CDS_start, expected_result, description)
-            
             # Positive Strand Cases
             (100, "+", 200, 5, "Positive strand, UTR upstream of CDS (5' UTR)"),
             (300, "+", 200, 3, "Positive strand, UTR downstream of CDS (3' UTR)"),
-            
             # Negative Strand Cases
             (300, "-", 200, 5, "Negative strand, UTR downstream of CDS (5' UTR)"),
             (100, "-", 200, 3, "Negative strand, UTR upstream of CDS (3' UTR)"),
-            
             # Edge cases for strict inequality
             (200, "+", 200, None, "Positive strand, Region equals CDS start"),
             (200, "-", 200, None, "Negative strand, Region equals CDS start"),
@@ -30,7 +27,9 @@ class TestCheckIdentity(unittest.TestCase):
 
         for region_start, strand, cds_start, expected, description in test_data:
             result = check_identity(region_start, strand, cds_start)
-            assert result == expected, f"Failed for case: {description}. Expected {expected}, got {result}"
+            assert result == expected, (
+                f"Failed for case: {description}. Expected {expected}, got {result}"
+            )
 
 
 class TestFastaCodonSearch(unittest.TestCase):
@@ -64,7 +63,7 @@ class TestFastaCodonSearch(unittest.TestCase):
         frame0 = fasta_codon_search(RNA, 0)
         frame1 = fasta_codon_search(RNA, 1)
         frame2 = fasta_codon_search(RNA, 2)
-        
+
         self.assertEqual(frame0, ["AUG", "UAG", "UAA"])
         self.assertEqual(frame1, ["UGU", "AGU"], msg="Frame 1 mismatch")
         self.assertEqual(frame2, ["GUA", "GUA"], msg="Frame 2 mismatch")
@@ -153,7 +152,6 @@ class TestFastaCodonSearch(unittest.TestCase):
         # should raise value error
         with self.assertRaises(ValueError):
             fasta_codon_search("AUG", 10)
-        
 
     def test_frame_three(self):
         """Test frame 3."""
@@ -167,13 +165,13 @@ class TestFastaCodonSearch(unittest.TestCase):
         """Verify all returned codons (except possibly last) have length 3."""
         RNA = "AUGUUUCUGGAGUUUUAAGGGCCC"
         result = fasta_codon_search(RNA, 0)
-        
+
         for i, codon in enumerate(result[:-1]):
             self.assertEqual(len(codon), 3, f"Codon {i} should have length 3")
-        
+
         # Last codon can be shorter
         self.assertLessEqual(len(result[-1]), 3)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
