@@ -76,6 +76,7 @@ def get_codons(seq, frame):
 def fasta_codon_search(RNA, frame):
     """Split nucleotide sequence into codon blocks for a given frame.
     Faster version of get_codons.
+    Incomplete codons are dropped, ie "AUGUU" will return "AUG"
 
     :param RNA: RNA nucleotide sequence
     :type RNA: str
