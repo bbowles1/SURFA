@@ -443,11 +443,15 @@ def check_identity(region_start, strand, CDS_start):
             return 3
         elif region_start < CDS_start:
             return 5
+        else:
+            raise Exception("Region start is equal to CDS start. Cannot determine identity.")
     if strand == "-":
         if region_start > CDS_start:
             return 5
         elif region_start < CDS_start:
             return 3
+        else:
+            raise Exception("Region start is equal to CDS start. Cannot determine identity.")
 
 
 def unpack_transcript(input_df, df_name):
