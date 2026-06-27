@@ -81,10 +81,15 @@ def fasta_codon_search(RNA, frame):
     :type RNA: str
     :param frame: Frame (0,1,2) to split on.
     :type frame: int
+    :raises ValueError: Invalid frame provided.
     :return: list of RNA nucleotides, split by frame.
     :rtype: list
     """
 
+    # check valid frame
+    if frame not in (0, 1, 2):
+        raise ValueError(f"Input frame must be 0, 1 or 2, received {frame}.") 
+    
     # Begin RNA reading frame at Nth position, then iterate over in chunks of 3
     return list(map("".join, zip(*[iter(RNA[frame:])] * 3)))
 
