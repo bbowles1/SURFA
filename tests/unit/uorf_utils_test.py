@@ -1,6 +1,6 @@
 import pytest
-import sys
-import os
+from surfa.uorf_utils import check_identity
+
 
 def test_check_identity():
     """
