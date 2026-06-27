@@ -2,6 +2,7 @@
 ![Status](https://img.shields.io/badge/status-development-yellow.svg)
 ![Docker](https://img.shields.io/badge/Docker-Supported-0db7ed.svg)
 ![Category](https://img.shields.io/badge/tool-bioinformatics-4caf50.svg)
+![License](https://img.shields.io/github/license/bbowles1/SURFA)
 
 # SURF-A
 
@@ -137,3 +138,7 @@ surfa query \
     --transcript ENST00000504921.7 \
     --output /data/uorfs.json
 ```
+
+# How to Cite
+
+TBD

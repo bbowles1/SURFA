@@ -76,15 +76,21 @@ def get_codons(seq, frame):
 def fasta_codon_search(RNA, frame):
     """Split nucleotide sequence into codon blocks for a given frame.
     Faster version of get_codons.
+    Incomplete codons are dropped, ie "AUGUU" will return "AUG"
 
     :param RNA: RNA nucleotide sequence
     :type RNA: str
     :param frame: Frame (0,1,2) to split on.
     :type frame: int
+    :raises ValueError: Invalid frame provided.
     :return: list of RNA nucleotides, split by frame.
     :rtype: list
     """
 
+    # check valid frame
+    if frame not in (0, 1, 2):
+        raise ValueError(f"Input frame must be 0, 1 or 2, received {frame}.") 
+    
     # Begin RNA reading frame at Nth position, then iterate over in chunks of 3
     return list(map("".join, zip(*[iter(RNA[frame:])] * 3)))
 
@@ -426,7 +432,8 @@ def unpack_attribute(attribute: pd.Series, field_name: str) -> pd.Series:
 
 
 def check_identity(region_start, strand, CDS_start):
-    """Check whether an input GTF UTR region is 5' or 3'
+    """Vectorized check whether an input GTF UTR region is 5' or 3'
+    Needed for older GTF versions
 
     :param region_start: UTR region start position
     :type region_start: int
@@ -434,7 +441,7 @@ def check_identity(region_start, strand, CDS_start):
     :type strand: str
     :param CDS_start: Coding DNA sequence start position
     :type CDS_start: int
-    :return: 5 or 3
+    :return: 5 or 3 (whether region is a 5' or 3' UTR)
     :rtype: int
     """
 
@@ -443,11 +450,15 @@ def check_identity(region_start, strand, CDS_start):
             return 3
         elif region_start < CDS_start:
             return 5
+        else:
+            return None
     if strand == "-":
         if region_start > CDS_start:
             return 5
         elif region_start < CDS_start:
             return 3
+        else:
+            return None
 
 
 def unpack_transcript(input_df, df_name):
@@ -692,6 +703,8 @@ def gtf_to_uorf_db(
         utr_df["utr_type"] = utr_df.apply(
             lambda row: check_identity(row.start, row.strand, row.cds_start), axis=1
         )
+        logger.info(f"Determined 5' or 3' identity for {
+            utr_df.utr_type.notna().value_counts(normalize=True)} of UTR regions.")
         utr_df = utr_df.loc[utr_df.utr_type == 5]
 
     #############
