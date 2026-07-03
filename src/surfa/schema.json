@@ -86,14 +86,14 @@
           "type": "TEXT",
           "nullable": false,
           "primary_key": false,
-          "description": "The index within the 5'UTR's raw FASTA sequence where the uORF begins."
+          "description": "The index within the 5'UTR's raw FASTA sequence where the uORF begins (0-based)."
         },
         {
           "name": "rel_stop_pos",
           "type": "TEXT",
           "nullable": false,
           "primary_key": false,
-          "description": "The index within the 5'UTR's raw FASTA sequence where the uORF ends."
+          "description": "The index within the 5'UTR's raw FASTA sequence where the uORF ends (0-based)."
         },
         {
           "name": "uORF_FASTA",
@@ -176,14 +176,14 @@
           "type": "INTEGER",
           "nullable": false,
           "primary_key": false,
-          "description": "Genomic start coordinate of the CDS."
+          "description": "Genomic start coordinate of the CDS (1-based)."
         },
         {
           "name": "end",
           "type": "INTEGER",
           "nullable": false,
           "primary_key": false,
-          "description": "Genomic end coordinate of the first CDS-containing exon."
+          "description": "Genomic end coordinate of the first CDS-containing exon (1-based)."
         },
         {
           "name": "FASTA",
@@ -197,14 +197,14 @@
           "type": "INTEGER",
           "nullable": false,
           "primary_key": false,
-          "description": "Index of the CDS start site within the exon FASTA sequence."
+          "description": "Index of the CDS start site within the exon FASTA sequence (0-based)."
         },
         {
           "name": "rel_stop",
           "type": "INTEGER",
           "nullable": false,
           "primary_key": false,
-          "description": "End of the 5'UTR exon sequence."
+          "description": "End of the 5'UTR exon sequence (0-based)."
         }
       ]
     },
@@ -231,14 +231,14 @@
           "type": "INTEGER",
           "nullable": false,
           "primary_key": false,
-          "description": "Genomic coordinates of the exon start site from the input GTF."
+          "description": "Genomic coordinates of the exon start site from the input GTF (1-based)."
         },
         {
           "name": "end",
           "type": "INTEGER",
           "nullable": false,
           "primary_key": false,
-          "description": "Genomic coordinates of the exon end site from the input GTF."
+          "description": "Genomic coordinates of the exon end site from the input GTF (1-based)."
         },
         {
           "name": "exon",
@@ -259,14 +259,14 @@
           "type": "INTEGER",
           "nullable": false,
           "primary_key": false,
-          "description": "Index of the exon start position within the overall FASTA sequence."
+          "description": "Index of the exon start position within the overall FASTA sequence (0-based)."
         },
         {
           "name": "rel_end",
           "type": "INTEGER",
           "nullable": false,
           "primary_key": false,
-          "description": "Index of the exon stop position within the overall FASTA sequence."
+          "description": "Index of the exon stop position within the overall FASTA sequence (0-based)."
         }
       ]
     },
@@ -300,28 +300,28 @@
           "type": "INTEGER",
           "nullable": false,
           "primary_key": false,
-          "description": "Index position within the 5'UTR FASTA sequence where this particular exon begins."
+          "description": "Index position within the 5'UTR FASTA sequence where this particular exon begins (0-based)."
         },
         {
           "name": "rel_stop",
           "type": "INTEGER",
           "nullable": false,
           "primary_key": false,
-          "description": "Index position within the 5'UTR FASTA sequence where this particular exon ends."
+          "description": "Index position within the 5'UTR FASTA sequence where this particular exon ends (0-based)."
         },
         {
           "name": "start",
           "type": "INTEGER",
           "nullable": false,
           "primary_key": false,
-          "description": "Genomic start position of the UTR, imported from the input GTF file."
+          "description": "Genomic start position of the UTR, imported from the input GTF file (1-based)."
         },
         {
           "name": "end",
           "type": "INTEGER",
           "nullable": false,
           "primary_key": false,
-          "description": "Genomic end position of the UTR, imported from the input GTF file."
+          "description": "Genomic end position of the UTR, imported from the input GTF file (1-based)."
         },
         {
           "name": "chrom",
