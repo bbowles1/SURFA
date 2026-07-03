@@ -212,6 +212,15 @@ def get_seq(BED_df, FASTA_path, working_dir, seqid_dict=None):
 
 
 def make_bed(ensg_df):
+    """Convert a 1-based ensembl GTF to a 0-based BED file
+
+    :param ensg_df: Ensembl GTF, imported to pandas
+    :type ensg_df: pandas.DataFrame
+    :return: BED-style Pandas dataframe (converted from 0 to 1 based, integers only)
+    :rtype: pandas.DataFrame
+    """
+
+
     logger.info("Converting input dataframe to BED format.")
 
     # make BED-compatable dataframe
@@ -228,8 +237,30 @@ def make_bed(ensg_df):
 
 
 def gtf_to_sequence(
-    input_df, FASTA_path, output_dir, seqid_path, seqid_key, seqid_value
+    input_df, FASTA_path, output_dir, seqid_path=None, 
+    seqid_key=None, seqid_value=None
 ):
+    """Map FASTA sequence to regions in a GTF file
+
+    :param input_df: GTF file converted to a pandas dataframe
+    :type input_df: pandas.DataFrame()
+    :param FASTA_path: Path to local FASTA file
+    :type FASTA_path: str
+    :param output_dir: Output directory to write temporary files
+    :type output_dir: str
+    :param seqid_path: Path to a seqid map (see docs for details)
+    :type seqid_path: str
+    :param seqid_key: Key to use from input seqid_path
+    :type seqid_key: str
+    :param seqid_value: Value to use when mapping seqids
+    :type seqid_value: str
+    :raises Exception: Input dataframe for GTF sequence cals is empty
+    :raises Exception: No FASTA sequences retrieved
+    :return: FASTA sequence mapped to GTF file
+    :rtype: pandas.DataFrame
+    """
+
+
     if input_df.empty:
         logger.error(
             "Could not retrieve FASTA sequence. Dataframe used for gtf_to_sequence call is empty!"

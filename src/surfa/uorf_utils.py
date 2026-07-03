@@ -732,10 +732,11 @@ def gtf_to_uorf_db(
 
     logger.info("Matching GTF to FASTA sequences...")
 
-    # new method for retrieving FASTA seq
+    # map FASTA to UTR sequences
     utr_df = gtf_to_sequence(
         utr_df, FASTA_path, output_dir, seqid_path, seqid_key, seqid_value
     )
+    # map FASTA to first CDS sequences
     first_cds = gtf_to_sequence(
         first_cds, FASTA_path, output_dir, seqid_path, seqid_key, seqid_value
     )
