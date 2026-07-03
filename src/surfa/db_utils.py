@@ -4,6 +4,8 @@ import pandas as pd
 import logging
 from importlib.resources import files
 import hashlib
+from pathlib import Path
+import csv
 
 logger = logging.getLogger(__name__)
 
@@ -194,3 +196,79 @@ def write_to_db(dataframes: dict[str, pd.DataFrame], db_path: str):
         raise
     finally:
         conn.close()
+
+
+
+def export_db(targetformat:str, dbpath:str, outpath:str):
+    """Convert the uORF table for a target database to a given output format (csv or bed)
+
+    :param targetformat: csv or bed to indicate output format.
+    :type format: str
+    :param dbpath: Path to a constructed SURFA database.
+    :type dbpath: str
+    :param outpath: Desired output path of the exported file.
+    :type outpath: str
+    """
+
+    # detect / lint desired format
+    lintedtargetformat = targetformat.lower().strip(".")
+    if lintedtargetformat != targetformat:
+        logger.debug("Input format {targetformat} converted to {lintedtargetformat}.")
+
+    if lintedtargetformat not in ['csv','bed']:
+        raise Exception(f"Provided target format {lintedtargetformat} should be `bed` or `csv`.")
+    
+    # detect / lint input database path
+    dbpath = Path(dbpath)
+    if not dbpath.exists():
+        raise FileNotFoundError(f"Input database file not found: {dbpath}.")
+
+    # create output database path
+    outpath = Path(outpath)
+    outpath.parent.mkdir(parents=True, exist_ok=True)
+
+    # connect to database
+    conn = sqlite3.connect(str(dbpath))
+
+    try:
+
+        if lintedtargetformat == "csv":
+
+            cursor = conn.cursor()
+            cursor.execute("select chrom, start, end, transcript, exon, FASTA from utr")
+
+            # column names from cursor description
+            column_names = [description[0] for description in cursor.description]
+            logger.info(f"Received database table with columns {column_names}.")
+
+            with open(outpath, "w", newline="", encoding="utf-8") as f:
+                writer = csv.writer(f)
+                writer.writerow(column_names)
+                # stream rows in batches to avoid high memory use
+                while True:
+                    rows = cursor.fetchmany(1000)
+                    if not rows:
+                        break
+                    writer.writerows(rows)
+
+        elif lintedtargetformat == "bed":
+
+            cursor = conn.cursor()
+            # selection converts from 1 to 0 based
+            cursor.execute("select chrom, start-1 AS chromStart, end-1 as chromEnd, transcript, exon, FASTA from utr")
+
+            # column names from cursor description
+            column_names = [description[0] for description in cursor.description]
+            logger.info(f"Received database table with columns {column_names}.")
+
+            with open(outpath, "w", newline="", encoding="utf-8") as f:
+                writer = csv.writer(f, delimiter="\t")
+                while True:
+                    rows = cursor.fetchmany(1000)
+                    if not rows:
+                        break
+                    writer.writerows(rows)
+
+    finally:
+        conn.close()
+    logger.info(f"Wrote output file with format `{lintedtargetformat}` to {outpath}.")
