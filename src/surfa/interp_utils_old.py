@@ -302,6 +302,16 @@ def splice_function(
 def indel_interpreter(
     start_POS, FASTA
 ):  # Indels need full ORF context to interpret. This function compresses uORF information to a single codon_change annotation.
+    """Annotate indels with information on furthest downstream stop codon.
+
+    :param start_POS: relative position of uORF start codon.
+    :type start_POS: int
+    :param FASTA: FASTA sequence of UTR
+    :type FASTA: str
+    :return: Shorthand description of indel effect
+    :rtype: str
+    """
+
     UTR_sequence = FASTA[
         start_POS:
     ]  # truncate the FASTA sequence (old_FASTA or new_FASTA)
@@ -327,7 +337,17 @@ def indel_interpreter(
             return "None"  # typically occurs when deletion spans the UTR boundaries
 
 
+
 def codon_shift_function(codon_change):
+    """Take shorthand descriptions of the indel effect and determine
+    how much the size of a uORF changed.
+
+    :param codon_change: shorthand description of codon change, ie from the `indel_interpreter` func
+    :type codon_change: str
+    :return: Magnitude of change in the uORF size following indel.
+    :rtype: int
+    """
+
     if "None" not in codon_change:
         left_int = codon_change.split(">")[0].split("*")[1]
         right_int = codon_change.split(">")[1].split("*")[1]
@@ -345,9 +365,26 @@ def codon_shift_function(codon_change):
 def novel_start_collector(
     old_FASTA, new_FASTA, REF, ALT, strand, relative_POS, UTR_sequence
 ):
-    # this function identifies novel start_codon creation within the UTR
-    # potential bug --> a novel start is detected even when an indel does not introduce a new start. IF statement to fiter these out is not very thorough
-    # could arguably just be over-interpreting, since my analysis is limited to the lesion site for indels
+    """This function identifies novel start_codon creation within the UTR
+    potential bug --> a novel start is detected even when an indel does not introduce a new start. IF statement to fiter these out is not very thorough
+
+    :param old_FASTA: Reference FASTA sequence of the UTR
+    :type old_FASTA: str
+    :param new_FASTA: Variant FASTA sequence of the UTR
+    :type new_FASTA: str
+    :param REF: REF call from the VCF file
+    :type REF: str
+    :param ALT: ALT call from the VCF file
+    :type ALT: str
+    :param strand: strand (+ or -)
+    :type strand: str
+    :param relative_POS: Relative position of the variant within the UTR FASTA sequence
+    :type relative_POS: str
+    :param UTR_sequence: FASTA sequence of the UTR
+    :type UTR_sequence: str
+    :return: Information on newly created uORFs with the format (sequence;Kozak|start*/frame)
+    :rtype: str
+    """
 
     new_orf = ""
 
@@ -522,7 +559,16 @@ def novel_start_collector(
 
 def complement_function(
     input_FASTA,
-):  # This function translates negative strand nucleotides into their complements, but does not reverse the reading frame - must do this manually
+):  
+    """This function translates negative strand nucleotides into 
+    their complements, but does not reverse the reading frame - must do this manually
+
+    :param input_FASTA: FASTA sequence to convert
+    :type input_FASTA: str
+    :return: Complement FASTA sequence
+    :rtype: str
+    """    
+
     nucleotide_dict = {"A": "T", "C": "G", "G": "C", "T": "A", "N": "N"}
 
     input_FASTA = [nucleotide_dict[k.upper()] for k in input_FASTA]
@@ -533,12 +579,27 @@ def complement_function(
 
 
 def is_whole(n):
+    """Determine if number if whole
+
+    :param n: number to check
+    :type n: int
+    :return: True if whole
+    :rtype: bool
+    """
     return n % 1 == 0
 
 
-def site_sensor(
-    new_FASTA, site_list
-):  # returns True if new_FASTA contains an element in the passed list
+def site_sensor(new_FASTA, site_list):
+    """Returns True if new_FASTA contains an element in the passed list
+
+    :param new_FASTA: New (variant) FASTA sequence
+    :type new_FASTA: str
+    :param site_list: list of codons (ie start / stop codons)
+    :type site_list: str
+    :return: True if new_FASTA contains a site of interest (from site_list)
+    :rtype: bool
+    """
+
     site = False  # must pass new_FASTA as a list structure
     if type(new_FASTA) == list:
         for i in new_FASTA:
