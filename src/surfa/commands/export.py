@@ -42,11 +42,7 @@ def register(subparsers, parents=None) -> None:
         help="Path to uorfs.db (created using surfa build command).",
     )
 
-    parser.add_argument(
-        "--output", 
-        required=True, 
-        help="Output file name."
-    )
+    parser.add_argument("--output", required=True, help="Output file name.")
 
     parser.add_argument(
         "--format",

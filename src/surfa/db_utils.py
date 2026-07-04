@@ -198,8 +198,7 @@ def write_to_db(dataframes: dict[str, pd.DataFrame], db_path: str):
         conn.close()
 
 
-
-def export_db(targetformat:str, dbpath:str, outpath:str):
+def export_db(targetformat: str, dbpath: str, outpath: str):
     """Convert the uORF table for a target database to a given output format (csv or bed)
 
     :param targetformat: csv or bed to indicate output format.
@@ -215,9 +214,11 @@ def export_db(targetformat:str, dbpath:str, outpath:str):
     if lintedtargetformat != targetformat:
         logger.debug("Input format {targetformat} converted to {lintedtargetformat}.")
 
-    if lintedtargetformat not in ['csv','bed']:
-        raise Exception(f"Provided target format {lintedtargetformat} should be `bed` or `csv`.")
-    
+    if lintedtargetformat not in ["csv", "bed"]:
+        raise Exception(
+            f"Provided target format {lintedtargetformat} should be `bed` or `csv`."
+        )
+
     # detect / lint input database path
     dbpath = Path(dbpath)
     if not dbpath.exists():
@@ -231,9 +232,7 @@ def export_db(targetformat:str, dbpath:str, outpath:str):
     conn = sqlite3.connect(str(dbpath))
 
     try:
-
         if lintedtargetformat == "csv":
-
             cursor = conn.cursor()
             cursor.execute("select chrom, start, end, transcript, exon, FASTA from utr")
 
@@ -252,10 +251,11 @@ def export_db(targetformat:str, dbpath:str, outpath:str):
                     writer.writerows(rows)
 
         elif lintedtargetformat == "bed":
-
             cursor = conn.cursor()
             # selection converts from 1 to 0 based
-            cursor.execute("select chrom, start-1 AS chromStart, end-1 as chromEnd, transcript, exon, FASTA from utr")
+            cursor.execute(
+                "select chrom, start-1 AS chromStart, end-1 as chromEnd, transcript, exon, FASTA from utr"
+            )
 
             # column names from cursor description
             column_names = [description[0] for description in cursor.description]

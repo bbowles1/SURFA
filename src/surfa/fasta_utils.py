@@ -220,7 +220,6 @@ def make_bed(ensg_df):
     :rtype: pandas.DataFrame
     """
 
-
     logger.info("Converting input dataframe to BED format.")
 
     # make BED-compatable dataframe
@@ -237,8 +236,7 @@ def make_bed(ensg_df):
 
 
 def gtf_to_sequence(
-    input_df, FASTA_path, output_dir, seqid_path=None, 
-    seqid_key=None, seqid_value=None
+    input_df, FASTA_path, output_dir, seqid_path=None, seqid_key=None, seqid_value=None
 ):
     """Map FASTA sequence to regions in a GTF file
 
@@ -259,7 +257,6 @@ def gtf_to_sequence(
     :return: FASTA sequence mapped to GTF file
     :rtype: pandas.DataFrame
     """
-
 
     if input_df.empty:
         logger.error(

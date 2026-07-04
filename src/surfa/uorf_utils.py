@@ -89,8 +89,8 @@ def fasta_codon_search(RNA, frame):
 
     # check valid frame
     if frame not in (0, 1, 2):
-        raise ValueError(f"Input frame must be 0, 1 or 2, received {frame}.") 
-    
+        raise ValueError(f"Input frame must be 0, 1 or 2, received {frame}.")
+
     # Begin RNA reading frame at Nth position, then iterate over in chunks of 3
     return list(map("".join, zip(*[iter(RNA[frame:])] * 3)))
 
@@ -703,8 +703,11 @@ def gtf_to_uorf_db(
         utr_df["utr_type"] = utr_df.apply(
             lambda row: check_identity(row.start, row.strand, row.cds_start), axis=1
         )
-        logger.info(f"Determined 5' or 3' identity for {
-            utr_df.utr_type.notna().value_counts(normalize=True)} of UTR regions.")
+        logger.info(
+            f"Determined 5' or 3' identity for {
+                utr_df.utr_type.notna().value_counts(normalize=True)
+            } of UTR regions."
+        )
         utr_df = utr_df.loc[utr_df.utr_type == 5]
 
     #############
