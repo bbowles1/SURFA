@@ -1,24 +1,9 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Fri Mar  5 16:41:59 2021
-
-Sequencing tools for uORF analysis
-
-1.3.2022 update: clarified wording for certain effects:
-novel_start > novel_near_cognate_start
-start_downregulation > start_Kozak_downregulation
-start_upregulation > start_Kozak_upregulation
-novel_CTG > novel_CTG_start
-novel_ATG > novel_ATG_start
-
-@author: m181414
-"""
-
 import pandas as pd
 import numpy as np
 import os
+import logging
 
+logger = logging.getLogger(__name__)
 
 stop_codons = ["TAA", "TAG", "TGA"]
 start_codons = [
@@ -42,6 +27,7 @@ low_start_codons = [
     "ATT",
     "ATC",
 ]  # low activity start codons per literature
+
 high_start_codons = ["ATG", "CTG"]  # highly active start codons per literature
 
 
@@ -57,12 +43,27 @@ class Processing_Error(Error):
     pass
 
 
-def FASTA_function(POS, FASTA_range, FASTA, strand):  # calculates new_FASTA for SNVs
+def FASTA_function(POS, FASTA_range, FASTA, strand):
+    """Calculate new_FASTA value for SNVs
+
+    :param POS: POS entry from the VCF
+    :type POS: int
+    :param FASTA_range: List of <class 'range'> values representing exon intervals
+    :type FASTA_range: list
+    :param FASTA: referece FASTA sequence for the interval
+    :type FASTA: str
+    :param strand: strand (+ or -)
+    :type strand: str
+    :return: variant (mutant) FASTA sequence
+    :rtype: str
+    """
+
     for interval in FASTA_range:
         if POS in interval:
             range_index = FASTA_range.index(interval)  # n of interval
 
-            relative_POS = POS - interval.start  # relative POS within interval
+            # compute relative position within interval
+            relative_POS = POS - interval.start
 
             if range_index > 0:
                 FASTA_range = FASTA_range[
@@ -120,6 +121,21 @@ def FASTA_function(POS, FASTA_range, FASTA, strand):  # calculates new_FASTA for
 
 
 def FASTA_deletion(POS, FASTA_range, FASTA, REF):  # calculates new_FASTA for deletions
+    """Calculate the new_FASTA sequence for deletions.
+
+    :param POS: POS entry from the VCF
+    :type POS: int
+    :param FASTA_range: List of <class 'range'> values representing exon intervals
+    :type FASTA_range: list
+    :param FASTA: referece FASTA sequence for the interval
+    :type FASTA: str
+    :param REF: Reference FASTA sequence
+    :type REF: str
+    :return: new FASTA sequence following deletion
+    :rtype: str
+    """
+
+
     for interval in FASTA_range:
         if POS in interval:
             range_index = FASTA_range.index(interval)  # n of interval
@@ -159,7 +175,23 @@ def FASTA_deletion(POS, FASTA_range, FASTA, REF):  # calculates new_FASTA for de
 
 def FASTA_insertion(
     POS, FASTA_range, FASTA, REF, ALT
-):  # injects ALT calls into the UTR_sequence
+):
+    """Calculate the new FASTA sequence for an insertion
+
+    :param POS: POS entry from the VCF
+    :type POS: int
+    :param FASTA_range: List of <class 'range'> values representing exon intervals
+    :type FASTA_range: list
+    :param FASTA: referece FASTA sequence for the interval
+    :type FASTA: str
+    :param REF: Reference FASTA sequence
+    :type REF: str
+    :param ALT: ALT call at VCF site
+    :type ALT: str
+    :return: new_FASTA resulting from insertion
+    :rtype: str
+    """
+
     for interval in FASTA_range:
         if POS in interval:
             range_index = FASTA_range.index(interval)  # n of interval
@@ -197,8 +229,19 @@ def FASTA_insertion(
 
 def frame_function(
     START, FASTA_range, FASTA
-):  # returns the relative_POS of the uORF START within the UTR
-    # START = uORF_start, function is strand-agnostic - must occur after START/STOP sites have been switched back for negative strands
+):  
+    """returns the relative_POS of the uORF START within the UTR.
+    The call is strand-agnostic - must occur after START/STOP sites have been switched back for negative strands
+
+    :param START: uORF start position
+    :type START: int
+    :param FASTA_range: list of FASTA range values
+    :type FASTA_range: list
+    :param FASTA: FASTA sequence 
+    :type FASTA: str
+    :return: relative position of uORF start within UTR
+    :rtype: int
+    """ 
 
     for interval in FASTA_range:
         if START in interval:
@@ -229,7 +272,19 @@ def frame_function(
 
 def splice_function(
     POS, FASTA_range, ALT
-):  # identify variants where a deletion may disrupt UTR splicing
+):
+    """Identify deletions which may be disruptive to UTR splicing.
+
+    :param POS: POS call from VCF
+    :type POS: int
+    :param FASTA_range: list of FASTA range values
+    :type FASTA_range: list
+    :param ALT: ALT call from VCF file
+    :type ALT: str
+    :return: True if call falls near a splice site
+    :rtype: bool
+    """
+
     splice_flag = False
 
     for interval in FASTA_range:
