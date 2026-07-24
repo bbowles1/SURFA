@@ -254,7 +254,12 @@ def export_db(targetformat: str, dbpath: str, outpath: str):
             cursor = conn.cursor()
             # selection converts from 1 to 0 based
             cursor.execute(
-                "select chrom, start-1 AS chromStart, end-1 as chromEnd, transcript, exon, FASTA from utr"
+                """
+                SELECT 
+                chrom, start-1 AS chromStart, end-1 as chromEnd, transcript, 
+                exon, length, rel_start, rel_stop, start, end, frame_state, FASTA 
+                FROM utr
+                """
             )
 
             # column names from cursor description
