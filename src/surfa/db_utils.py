@@ -80,7 +80,7 @@ def create_metadata_df(metadata_dict):
             [
                 md_df,
                 pd.DataFrame(
-                    [["version", installed_version, None]],
+                    [["surfa_version", installed_version, None]],
                     columns=["input", "value", "md5sum"],
                 ),
             ]
