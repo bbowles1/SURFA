@@ -3,6 +3,7 @@ import sqlite3
 import pandas as pd
 import logging
 from importlib.resources import files
+from importlib.metadata import version, PackageNotFoundError
 import hashlib
 from pathlib import Path
 import csv
@@ -44,19 +45,20 @@ def calculate_md5(file_path):
 
 
 def create_metadata_df(metadata_dict):
-    """Create a pandas dataframe of build metadata
+    """Create a pandas dataframe of build metadata.
 
-    :param metadata_dict: _description_
-    :type metadata_dict: _type_
-    :return: _description_
-    :rtype: _type_
+    :param metadata_dict: key:value pairs of all input paths passed to cli (eg `gtf_path` arg).
+    :type metadata_dict: dict
+    :return: Pandas dataframe of md5sums for all path values and fetches surfa version number.
+    :rtype: pandas DataFrame
     """
 
-    md_df = pd.DataFrame(list(metadata_dict.items()), columns=["input", "path"])
+    md_df = pd.DataFrame(list(metadata_dict.items()), columns=["input", "value"])
     md_df["md5sum"] = ""
 
+    # calculate md5sums for Path values
     for name, path in metadata_dict.items():
-        if path:
+        if path and name != "version":
             md5sum = calculate_md5(path)
         else:
             logger.debug(
@@ -66,6 +68,26 @@ def create_metadata_df(metadata_dict):
 
         # update df with md5
         md_df.loc[md_df.input == name, "md5sum"] = md5sum
+
+    # append package version to metadata
+    try:
+        # get installed version of `surfa`
+        installed_version = version("surfa")
+        logger.debug(f"Located installed version of surfa: {installed_version}.")
+
+        # append as new row
+        md_df = pd.concat(
+            [
+                md_df,
+                pd.DataFrame(
+                    [["version", installed_version, None]],
+                    columns=["input", "value", "md5sum"],
+                ),
+            ]
+        )
+
+    except PackageNotFoundError:
+        logger.error("Could not find an installed package with `surfa` name.")
 
     return md_df
 
