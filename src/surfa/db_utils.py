@@ -3,7 +3,10 @@ import sqlite3
 import pandas as pd
 import logging
 from importlib.resources import files
+from importlib.metadata import version, PackageNotFoundError
 import hashlib
+from pathlib import Path
+import csv
 
 logger = logging.getLogger(__name__)
 
@@ -42,19 +45,20 @@ def calculate_md5(file_path):
 
 
 def create_metadata_df(metadata_dict):
-    """Create a pandas dataframe of build metadata
+    """Create a pandas dataframe of build metadata.
 
-    :param metadata_dict: _description_
-    :type metadata_dict: _type_
-    :return: _description_
-    :rtype: _type_
+    :param metadata_dict: key:value pairs of all input paths passed to cli (eg `gtf_path` arg).
+    :type metadata_dict: dict
+    :return: Pandas dataframe of md5sums for all path values and fetches surfa version number.
+    :rtype: pandas DataFrame
     """
 
-    md_df = pd.DataFrame(list(metadata_dict.items()), columns=["input", "path"])
+    md_df = pd.DataFrame(list(metadata_dict.items()), columns=["input", "value"])
     md_df["md5sum"] = ""
 
+    # calculate md5sums for Path values
     for name, path in metadata_dict.items():
-        if path:
+        if path and name != "version":
             md5sum = calculate_md5(path)
         else:
             logger.debug(
@@ -64,6 +68,26 @@ def create_metadata_df(metadata_dict):
 
         # update df with md5
         md_df.loc[md_df.input == name, "md5sum"] = md5sum
+
+    # append package version to metadata
+    try:
+        # get installed version of `surfa`
+        installed_version = version("surfa")
+        logger.debug(f"Located installed version of surfa: {installed_version}.")
+
+        # append as new row
+        md_df = pd.concat(
+            [
+                md_df,
+                pd.DataFrame(
+                    [["surfa_version", installed_version, None]],
+                    columns=["input", "value", "md5sum"],
+                ),
+            ]
+        )
+
+    except PackageNotFoundError:
+        logger.error("Could not find an installed package with `surfa` name.")
 
     return md_df
 
@@ -194,3 +218,84 @@ def write_to_db(dataframes: dict[str, pd.DataFrame], db_path: str):
         raise
     finally:
         conn.close()
+
+
+def export_db(targetformat: str, dbpath: str, outpath: str):
+    """Convert the uORF table for a target database to a given output format (csv or bed)
+
+    :param targetformat: csv or bed to indicate output format.
+    :type format: str
+    :param dbpath: Path to a constructed SURFA database.
+    :type dbpath: str
+    :param outpath: Desired output path of the exported file.
+    :type outpath: str
+    """
+
+    # detect / lint desired format
+    lintedtargetformat = targetformat.lower().strip(".")
+    if lintedtargetformat != targetformat:
+        logger.debug("Input format {targetformat} converted to {lintedtargetformat}.")
+
+    if lintedtargetformat not in ["csv", "bed"]:
+        raise Exception(
+            f"Provided target format {lintedtargetformat} should be `bed` or `csv`."
+        )
+
+    # detect / lint input database path
+    dbpath = Path(dbpath)
+    if not dbpath.exists():
+        raise FileNotFoundError(f"Input database file not found: {dbpath}.")
+
+    # create output database path
+    outpath = Path(outpath)
+    outpath.parent.mkdir(parents=True, exist_ok=True)
+
+    # connect to database
+    conn = sqlite3.connect(str(dbpath))
+
+    try:
+        if lintedtargetformat == "csv":
+            cursor = conn.cursor()
+            cursor.execute("select chrom, start, end, transcript, exon, FASTA from utr")
+
+            # column names from cursor description
+            column_names = [description[0] for description in cursor.description]
+            logger.info(f"Received database table with columns {column_names}.")
+
+            with open(outpath, "w", newline="", encoding="utf-8") as f:
+                writer = csv.writer(f)
+                writer.writerow(column_names)
+                # stream rows in batches to avoid high memory use
+                while True:
+                    rows = cursor.fetchmany(1000)
+                    if not rows:
+                        break
+                    writer.writerows(rows)
+
+        elif lintedtargetformat == "bed":
+            cursor = conn.cursor()
+            # selection converts from 1 to 0 based
+            cursor.execute(
+                """
+                SELECT 
+                chrom, start-1 AS chromStart, end-1 as chromEnd, transcript, 
+                exon, length, rel_start, rel_stop, start, end, frame_state, FASTA 
+                FROM utr
+                """
+            )
+
+            # column names from cursor description
+            column_names = [description[0] for description in cursor.description]
+            logger.info(f"Received database table with columns {column_names}.")
+
+            with open(outpath, "w", newline="", encoding="utf-8") as f:
+                writer = csv.writer(f, delimiter="\t")
+                while True:
+                    rows = cursor.fetchmany(1000)
+                    if not rows:
+                        break
+                    writer.writerows(rows)
+
+    finally:
+        conn.close()
+    logger.info(f"Wrote output file with format `{lintedtargetformat}` to {outpath}.")

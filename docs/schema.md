@@ -7,7 +7,7 @@ icon: lucide/database-search
 # Database schema
 
 The output database (`uorfs.db`) contains five tables. All tables share `transcript`
-as a common join key.
+as a common join key. Absolute genomic coordinates are 1-based, while relative position annotations are 0-based. When in doubt, consult `src/surfa/schema.json` for the full description of your database column.
 
 ```mermaid
 erDiagram

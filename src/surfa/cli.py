@@ -15,7 +15,7 @@ import sys
 import logging
 import os
 
-from surfa.commands import build, query
+from surfa.commands import build, query, export
 
 
 def make_parser() -> argparse.ArgumentParser:
@@ -64,6 +64,7 @@ def make_parser() -> argparse.ArgumentParser:
 
     build.register(subparsers, parents=[global_parser])
     query.register(subparsers, parents=[global_parser])
+    export.register(subparsers, parents=[global_parser])
 
     return parser
 
