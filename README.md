@@ -8,9 +8,7 @@
 
 # SURFA: a Python tool for labeling Upstream Open Reading Frames (uORFs). 
 
-The Small Upstream Reading Frame Annotator (SURFA) provides a way to build a SQLite database of uORF sequences from any input set of Ensembl GTF and FASTA files. This tool uses Bedtools to retrieve sequencing data before calling and labeling uORF regions in the GTF transcript data.
-
-"SURFA builds a SQLite database of upstream open reading frames (uORFs) from an Ensembl GTF and matching genome FASTA, then queries it per transcript. It runs as a surfa CLI and in Docker."
+SURFA (the Small Upstream Reading Frame Annotator) builds a SQLite database of 5'UTR open reading frames from any set of Ensembl reference files.
 
 Full docs are available at [https://bbowles1.github.io/SURFA/](https://bbowles1.github.io/SURFA/).
 
