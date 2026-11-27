@@ -27,6 +27,7 @@ surfa = ["*.json"]
 dev = [
     "mdformat>=1.0.0",
     "mkdocstrings-python>=2.0.4",
+    "pip-audit>=2.10.1",
     "ruff>=0.13.3",
     "zensical>=0.0.44",
 ]

@@ -1,12 +1,14 @@
-![Python](https://img.shields.io/badge/Python-3.13+-blue.svg)
-![Status](https://img.shields.io/badge/status-development-yellow.svg)
-![Docker](https://img.shields.io/badge/Docker-Supported-0db7ed.svg)
-![Category](https://img.shields.io/badge/tool-bioinformatics-4caf50.svg)
-![License](https://img.shields.io/github/license/bbowles1/SURFA)
+[![CI](https://github.com/bbowles1/SURFA/actions/workflows/main.yml/badge.svg?branch=main)](https://github.com/bbowles1/SURFA/actions/workflows/main.yml)
+[![Docs](https://img.shields.io/badge/docs-bbowles1.github.io%2FSURFA-2ea44f)](https://bbowles1.github.io/SURFA/)
+[![Python 3.13+](https://img.shields.io/badge/python-3.13%2B-3776AB?logo=python&logoColor=white)](pyproject.toml)
+[![License](https://img.shields.io/github/license/bbowles1/SURFA?label=license)](LICENSE)
+[![Dockerfile](https://img.shields.io/badge/container-Dockerfile-2496ED?logo=docker&logoColor=white)](Dockerfile)
+[![Input](https://img.shields.io/badge/input-Ensembl%20GTF%20%2B%20FASTA-4caf50)](docs/index.md#inputs)
+[![Output](https://img.shields.io/badge/output-SQLite%20uORF%20database-003B57?logo=sqlite&logoColor=white)](docs/schema.md)
 
-# SURF-A: a Python tool for labeling Upstream Open Reading Frames (uORFs). 
+# SURFA: a Python tool for labeling Upstream Open Reading Frames (uORFs). 
 
-SURF-A provides a way to build a SQLite database of uORF sequences from any input set of Ensembl GTF and FASTA files. This tool uses Bedtools to retrieve sequencing data before calling and labeling uORF regions in the GTF transcript data.
+SURFA (the Small Upstream Reading Frame Annotator) builds a SQLite database of 5'UTR open reading frames from any set of Ensembl reference files.
 
 Full docs are available at [https://bbowles1.github.io/SURFA/](https://bbowles1.github.io/SURFA/).
 
