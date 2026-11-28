@@ -35,9 +35,9 @@ erDiagram
   uorfs {
     TEXT uorf_id PK
     TEXT transcript
-    TEXT uorf_length
-    TEXT rel_start_pos
-    TEXT rel_stop_pos
+    INTEGER uorf_length
+    INTEGER rel_start_pos
+    INTEGER rel_stop_pos
     TEXT uORF_FASTA
     TEXT start_codon
     TEXT stop_codon
@@ -105,9 +105,9 @@ Upstream open reading frames identified within each 5' UTR.
 |---|---|---|---|
 | `uorf_id` | TEXT | No | Unique uORF identifier. Primary key. |
 | `transcript` | TEXT | No | Parent transcript ID. Foreign key → `transcripts.transcript`. |
-| `uorf_length` | TEXT | No | Length of the uORF in nucleotides. |
-| `rel_start_pos` | TEXT | No | Index within the 5' UTR FASTA where the uORF begins. |
-| `rel_stop_pos` | TEXT | No | Index within the 5' UTR FASTA where the uORF ends. |
+| `uorf_length` | INTEGER | No | Length of the uORF in nucleotides. |
+| `rel_start_pos` | INTEGER | No | Index within the 5' UTR FASTA where the uORF begins. |
+| `rel_stop_pos` | INTEGER | No | Index within the 5' UTR FASTA where the uORF ends. |
 | `uORF_FASTA` | TEXT | No | mRNA sequence of the uORF region. |
 | `start_codon` | TEXT | No | Start codon of the uORF, e.g. `AUG`. |
 | `stop_codon` | TEXT | No | Stop codon of the uORF, e.g. `UGA`. `NO_UTR_STOP` if the uORF reads into the CDS. |

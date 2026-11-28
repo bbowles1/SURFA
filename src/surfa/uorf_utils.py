@@ -745,7 +745,7 @@ def gtf_to_uorf_db(
     # drop columns where FASTA sequence could not be mapped
     drop_rows = utr_df.loc[utr_df.FASTA.isna()].index
     if not drop_rows.empty:
-        logger.warnings(
+        logger.warning(
             f"{len(drop_rows)} FASTA sequences could not be mapped to the input GTF."
         )
     utr_df = utr_df.loc[utr_df.FASTA.notna()]
