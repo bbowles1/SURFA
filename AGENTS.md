@@ -245,36 +245,29 @@ These are current repo facts, not necessarily desired end states. Confirm intent
 1. **Integration tests hardcode `/app` paths.** `tests/integration/build_test_db.sh`
    writes `/app/tests/uorfs.db`; `test_sequence_identity.py` reads `/app/tests/...`.
    Local runs outside Docker need path edits or an equivalent mount.
-2. **`logger.warnings` typo** in `uorf_utils.py` (around the check for unmapped UTR
-   sequences). `logging.Logger` has `warning`, not `warnings`; this path raises
-   `AttributeError` when sequences are dropped.
-3. **`score_kozak` is a stub.** It always returns `1` regardless of codon and is not
+2. **`score_kozak` is a stub.** It always returns `1` regardless of codon and is not
    called by the build pipeline. Do not treat it as functional scoring.
-4. **Schema type quirks.** `uorfs.uorf_length`, `rel_start_pos`, and `rel_stop_pos` are
-   declared `TEXT` in `schema.json` even though the pipeline computes integers. Values
-   round-trip as text under SQLite/validation. Changing types affects docs, JSON output,
-   and downstream consumers.
-5. **Docs drift.** `docs/schema.md` says the database has "five tables" but `schema.json`
+3. **Docs drift.** `docs/schema.md` says the database has "five tables" but `schema.json`
    defines six (`transcripts`, `uorfs`, `utr`, `cds`, `exons`, `build_data`). It also
    contains a stray `## icon: lucide/folder-kanban` heading. `docs/schema.md` should be
    reconciled with `schema.json` when schema work happens.
-6. **Version mismatch.** `pyproject.toml` and `__init__.py` declare `0.1.0`; `cli.py`
+4. **Version mismatch.** `pyproject.toml` and `__init__.py` declare `0.1.0`; `cli.py`
    hardcodes `%(prog)s 0.1.0`; `CITATION.cff` declares version `1.0.0`. Update all of
    these together when releasing.
-7. **`src/surfa/commands/` has no `__init__.py`.** Imports work with source/editable
+5. **`src/surfa/commands/` has no `__init__.py`.** Imports work with source/editable
    installs, but verify wheel packaging if you add command modules or build a
    distribution.
-8. **`src/surfa/__main__.py` is empty.** `python -m surfa` does nothing; use the `surfa`
+6. **`src/surfa/__main__.py` is empty.** `python -m surfa` does nothing; use the `surfa`
    console script or call `surfa.cli.main` directly.
-9. **`--output-dir` must already exist**, and is used for `uorfs.db` and the temporary
+7. **`--output-dir` must already exist**, and is used for `uorfs.db` and the temporary
    `tmp.bed`. Concurrent builds sharing an output directory will collide on `tmp.bed`.
-10. **Gene metadata parsing is positional and Ensembl-specific.** `gene_id` is taken
-    from the second space-separated token and `gene_name` from a fixed attribute
-    position. GTFs with different attribute ordering may produce wrong metadata.
-11. **`query_uorf_db` swallows SQLite errors** (prints and returns `[]`), and
-    `assemble_json_from_transcript` assumes exactly one transcript row and at least one
-    uORF row. Missing transcripts/uORFs can surface as unrelated downstream exceptions.
-12. **Test discovery pattern is `*test*.py`**, which includes both unit and integration
+8. **Gene metadata parsing is positional and Ensembl-specific.** `gene_id` is taken
+   from the second space-separated token and `gene_name` from a fixed attribute
+   position. GTFs with different attribute ordering may produce wrong metadata.
+9. **`query_uorf_db` swallows SQLite errors** (prints and returns `[]`), and
+   `assemble_json_from_transcript` assumes exactly one transcript row and at least one
+   uORF row. Missing transcripts/uORFs can surface as unrelated downstream exceptions.
+10. **Test discovery pattern is `*test*.py`**, which includes both unit and integration
     tests. Running discovery at the repo root locally will pick up the `/app`-dependent
     integration tests.
 

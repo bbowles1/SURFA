@@ -76,21 +76,21 @@
         },
         {
           "name": "uorf_length",
-          "type": "TEXT",
+          "type": "INTEGER",
           "nullable": false,
           "primary_key": false,
           "description": "Length of the uORF, in nucleotides."
         },
         {
           "name": "rel_start_pos",
-          "type": "TEXT",
+          "type": "INTEGER",
           "nullable": false,
           "primary_key": false,
           "description": "The index within the 5'UTR's raw FASTA sequence where the uORF begins."
         },
         {
           "name": "rel_stop_pos",
-          "type": "TEXT",
+          "type": "INTEGER",
           "nullable": false,
           "primary_key": false,
           "description": "The index within the 5'UTR's raw FASTA sequence where the uORF ends."
